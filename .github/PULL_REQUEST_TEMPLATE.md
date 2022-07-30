@@ -30,3 +30,11 @@
 - [ ] I have performed a self-review of my code
 - [ ] I have added tests that prove my fix is effective or that my feature works <!-- Delete this if not applicable -->
 - [ ] I have ran `task check -f` and have no issues
+
+## Code review and merge strategy 
+
+<!-- Please select only *one* of the following.  -->
+
+- [ ] Ship: this pull request can be automatically merged and does not require code review 
+- [ ] Show: this pull request can be auto-merged and code review should be done post merge 
+- [ ] Ask: this pull request requires a code review before merge 
