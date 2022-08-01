@@ -33,8 +33,8 @@
 
 ## Code review and merge strategy (ship/show/ask) 
 
-<!-- Please uncomment only *one* of the following -->
+<!-- Please uncomment and check only *one* of the following -->
 
-<!-- - [x] Ship: this pull request can be automatically merged and does not require code review --> 
-<!-- - [x] Show: this pull request can be auto-merged and code review should be done post merge --> 
-<!-- - [x] Ask: this pull request requires a code review before merge -->
+<!-- - [ ] Ship: this pull request can be automatically merged and does not require code review --> 
+<!-- - [ ] Show: this pull request can be auto-merged and code review should be done post merge --> 
+<!-- - [ ] Ask: this pull request requires a code review before merge -->
