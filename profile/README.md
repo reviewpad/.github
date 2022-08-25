@@ -1,3 +1,5 @@
+![Reviewpad-Background-Logo-Shorter@1 5x](https://user-images.githubusercontent.com/38539/186731843-16f84f3e-1dd8-42c4-a575-7b5f3d3b5a92.png)
+
 # Welcome to Reviewpad
 
 Hi 👋
