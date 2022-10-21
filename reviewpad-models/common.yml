@@ -23,7 +23,6 @@ groups:
 rules:
   - name: work-in-progress
     kind: patch
-    description: Pull request is WIP
     spec: '$isDraft()'
 
   - name: does-not-have-linked-issues
@@ -32,7 +31,6 @@ rules:
 
 workflows:
   - name: add-label-with-size
-    description: Add label with size of the pull request
     always-run: true
     if:
       - rule: $size() <= 15
@@ -46,7 +44,6 @@ workflows:
           - '$addLabel("large")'
 
   - name: lint-commits
-    description: Lint commits
     always-run: true
     if:
       - rule: '!$hasLinearHistory()'
@@ -57,8 +54,7 @@ workflows:
         extra-actions:
           - '$commitLint()'
 
-  - name: add-to-project
-    description: Pull requests without linked issues are added to the project
+  - name: check-for-linked-issued
     always-run: true
     if:
       - rule: does-not-have-linked-issues
