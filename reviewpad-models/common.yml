@@ -14,12 +14,6 @@ labels:
     description: "large pull request"
     color: "#8a2138"
 
-groups:
-  - name: owners
-    description: Group of owners
-    kind: developers
-    spec: '["marcelosousa", "ferreiratiago"]'
-
 rules:
   - name: work-in-progress
     kind: patch
