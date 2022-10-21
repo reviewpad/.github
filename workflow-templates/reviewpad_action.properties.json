@@ -2,4 +2,7 @@
     "name": "Reviewpad Starter Workflow",
     "description": "Reviewpad starter workflow.",
     "iconName": "reviewpad-icon",
+    "filePatterns": [
+        "^reviewpad_action.yml$"
+    ]
 }
