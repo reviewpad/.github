@@ -5,13 +5,13 @@ edition: professional
 
 labels:
   small:
-    description: "size/x"
+    description: "small pull request"
     color: "#294b69"
   medium:
-    description: "size/m"
+    description: "medium pull request"
     color: "#a8c3f7"
   large:
-    description: "size/l"
+    description: "large pull request"
     color: "#8a2138"
 
 groups:
