@@ -33,10 +33,10 @@ workflows:
   - name: add-label-with-size
     always-run: true
     if:
-      - rule: $size() <= 15
+      - rule: $size() <= 30
         extra-actions:
           - '$addLabel("small")'
-      - rule: $size() > 15 && $size() <= 100
+      - rule: $size() > 30 && $size() <= 100
         extra-actions:
           - '$addLabel("medium")'
       - rule: $size() > 100
@@ -53,6 +53,7 @@ workflows:
       - rule: 'true'
         extra-actions:
           - '$commitLint()'
+          - '$titleLint()'
 
   - name: check-for-linked-issued
     always-run: true
