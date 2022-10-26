@@ -3,5 +3,8 @@
     "description": "Workflow to build Go projects in pull requests.",
     "categories": [
         "Go"
+    ],
+    "filePatterns": [
+        ".*.go"
     ]
 }

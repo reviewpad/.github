@@ -3,5 +3,8 @@
     "description": "Workflow to build Go projects in main branch.",
     "categories": [
         "Go"
+    ],
+    "filePatterns": [
+        ".*.go"
     ]
 }
