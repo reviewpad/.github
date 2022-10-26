@@ -1,0 +1,10 @@
+{
+    "name": "Pull request build workflow",
+    "description": "Workflow to build Go projects in pull requests.",
+    "categories": [
+        "Go"
+    ],
+    "filePatterns": [
+        ".*.go"
+    ]
+}
