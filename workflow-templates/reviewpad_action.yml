@@ -7,7 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Reviewpad
     steps:
-      # Run Reviewpad on all new Issues and Pull Requests! 🦄
       - name: Reviewpad
         uses: reviewpad/action@v3.x
         with:
