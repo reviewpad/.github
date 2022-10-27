@@ -1,27 +1,12 @@
 api-version: reviewpad.com/v3.x
 
-mode: silent
-edition: professional
-
 labels:
   small:
-    description: "small pull request"
     color: "#294b69"
   medium:
-    description: "medium pull request"
     color: "#a8c3f7"
   large:
-    description: "large pull request"
     color: "#8a2138"
-
-rules:
-  - name: work-in-progress
-    kind: patch
-    spec: '$isDraft()'
-
-  - name: does-not-have-linked-issues
-    kind: patch
-    spec: '!$hasLinkedIssues() && !$rule("work-in-progress")'
 
 workflows:
   - name: add-label-with-size
@@ -52,16 +37,9 @@ workflows:
   - name: check-for-linked-issued
     always-run: true
     if:
-      - rule: does-not-have-linked-issues
+      - '!$hasLinkedIssues()'
     then:
       - '$info("This pull request does not have a linked issue")'
-
-  - name: setup-reviewer-assignment
-    always-run: true
-    if:
-      - rule: work-in-progress
-    then:
-        - '$disableActions(["assignRandomReviewer", "assignReviewer", "assignTeamReviewer"])'
 
   - name: empty-description
     on:
@@ -78,16 +56,16 @@ workflows:
       - "issue"
     always-run: true
     if:
-      - rule: $issueCountBy($author(), "all") == 1
-        extra-actions:
-          - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first issue!", [$author()]))'
+      - '$issueCountBy($author(), "all") == 1'
+    then:
+      - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first issue!", [$author()]))'
 
   - name: first-time-pr-contributor
     on:
       - "pull_request"
     always-run: true
     if:
-      - rule: $pullRequestCountBy($author(), "all") == 1
-        extra-actions:
-          - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request!", [$author()]))'
+      - '$pullRequestCountBy($author(), "all") == 1'
+    then:
+      - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request!", [$author()]))'
 
