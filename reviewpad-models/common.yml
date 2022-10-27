@@ -27,8 +27,8 @@ workflows:
     if:
       - rule: '!$hasLinearHistory()'
         extra-actions:
-          - '$error("This pull request does not have linear history - please fix this!")'
-          - '$fail("Commit lint failed")'
+          - '$warn($sprintf("The pull request it outdated with the base @%v", $base()))'
+          - '$fail("Pull request is outdated")'
       - rule: 'true'
         extra-actions:
           - '$commitLint()'
@@ -42,30 +42,16 @@ workflows:
       - '$info("This pull request does not have a linked issue")'
 
   - name: empty-description
-    on:
-      - "issue"
-      - "pull_request"
     always-run: true
     if:
       - $description() == ""
-    then: 
-      - '$error("The description is empty. Please add more information!")'
-
-  - name: first-time-issue-contributor
-    on:
-      - "issue"
-    always-run: true
-    if:
-      - '$issueCountBy($author(), "all") == 1'
     then:
-      - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first issue!", [$author()]))'
+      - '$warn("The description is empty. Please add more information!")'
+      - '$fail("Empty description")'
 
-  - name: first-time-pr-contributor
-    on:
-      - "pull_request"
+  - name: first-time-contributor
     always-run: true
     if:
       - '$pullRequestCountBy($author(), "all") == 1'
     then:
       - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request!", [$author()]))'
-
