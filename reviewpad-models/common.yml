@@ -41,6 +41,13 @@ workflows:
     then:
       - '$info("This pull request does not have a linked issue")'
 
+  - name: first-time-contributor
+    always-run: true
+    if:
+      - '$pullRequestCountBy($author(), "all") == 1'
+    then:
+      - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request!", [$author()]))'
+
   - name: empty-description
     always-run: true
     if:
@@ -48,10 +55,3 @@ workflows:
     then:
       - '$warn("The description is empty. Please add more information!")'
       - '$fail("Empty description")'
-
-  - name: first-time-contributor
-    always-run: true
-    if:
-      - '$pullRequestCountBy($author(), "all") == 1'
-    then:
-      - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request!", [$author()]))'
