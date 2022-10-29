@@ -1,0 +1,8 @@
+api-version: reviewpad.com/v3.x
+
+workflows:
+  - name: reviewer-assignment
+    if:
+      - '$isElementOf($author(), $group("new-joiners"))'
+    then:
+      - '$assignReviewer($group("tech-leads"))'
