@@ -27,8 +27,7 @@ workflows:
     if:
       - rule: '!$hasLinearHistory()'
         extra-actions:
-          - '$warn($sprintf("The pull request it outdated with the base @%v", $base()))'
-          - '$fail("Pull request is outdated")'
+          - '$warn("The pull request does not have a linear history")'
       - rule: 'true'
         extra-actions:
           - '$commitLint()'
