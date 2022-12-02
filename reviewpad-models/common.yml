@@ -40,6 +40,18 @@ workflows:
     then:
       - '$info("This pull request does not have a linked issue")'
 
+  - name: manage-issues-in-projects
+    always-run: true
+    on:
+      - issue
+    if:
+      - rule: $state() == "open" && !$isLinkedToProject("Reviewpad")
+        extra-actions:
+          - $addToProject("Reviewpad", "Backlog")")
+      - rule: $state() == "closed"
+        extra-actions:
+          - $addToProject("Reviewpad", "Done")
+
   - name: first-time-contributor
     always-run: true
     if:
