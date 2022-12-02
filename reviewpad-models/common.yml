@@ -47,7 +47,7 @@ workflows:
     if:
       - rule: $state() == "open" && !$isLinkedToProject("Reviewpad")
         extra-actions:
-          - $addToProject("Reviewpad", "Backlog")")
+          - $addToProject("Reviewpad", "Backlog")
       - rule: $state() == "closed"
         extra-actions:
           - $addToProject("Reviewpad", "Done")
