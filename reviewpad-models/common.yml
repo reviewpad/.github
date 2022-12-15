@@ -1,5 +1,7 @@
 api-version: reviewpad.com/v3.x
 
+metrics-on-merge: true
+
 labels:
   small:
     color: "#294b69"
