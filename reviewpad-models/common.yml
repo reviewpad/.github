@@ -29,7 +29,7 @@ workflows:
     if:
       - rule: '!$hasLinearHistory()'
         extra-actions:
-          - '$warn("The pull request does not have a linear history")'
+          - '$warn("The pull request does not have a linear history.")'
       - rule: 'true'
         extra-actions:
           - '$commitLint()'
@@ -40,7 +40,7 @@ workflows:
     if:
       - '!$hasLinkedIssues()'
     then:
-      - '$info("This pull request does not have a linked issue")'
+      - '$info("This pull request does not have a linked issue.")'
 
   - name: manage-issues-in-projects
     always-run: true
@@ -65,6 +65,8 @@ workflows:
     always-run: true
     if:
       - $description() == ""
+    on:
+      - pull_request
+      - issue
     then:
-      - '$warn("The description is empty. Please add more information!")'
-      - '$fail("Empty description")'
+      - '$close("Automatically closing this issue/pull request. Please add a description.")'
