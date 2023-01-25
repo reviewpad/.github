@@ -10,3 +10,6 @@ Hi 👋
 
 🚀 Reviewpad wants to be the product that every software developer uses to understand, review and deploy changes to codebases.
 
+---
+
+↗️  Install GitHub App: https://github.com/marketplace/reviewpad
