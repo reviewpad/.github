@@ -141,7 +141,7 @@ pipelines:
       # This is useful for avoiding a reviewer to review a pull request that is not ready to be reviewed.
       - actions:
           - $warn("The pull request does not have all checks completed with success. If checks are still running, Reviewpad will only assign a reviewer when all checks have completed. If checks have failed, please fix them.")
-        until: $haveAllChecksRunCompleted([], "success")
+        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       # At this point, the pull request is ready to be reviewed.
       - actions:
           - $assignAssignees([$author()])
@@ -174,7 +174,7 @@ pipelines:
       # Check if the pull request has all checks completed with success.
       - actions:
           - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request checks are not all completed with success. Blocking merge until all checks are completed with success.")
-        until: $haveAllChecksRunCompleted([], "success")
+        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       # Check if the pull request is still waiting for review.
       # If yes, create a review to block the merge.
       - actions:
