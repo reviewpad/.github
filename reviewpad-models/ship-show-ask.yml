@@ -3,13 +3,13 @@ api-version: reviewpad.com/v3.x
 labels:
   ship:
     description: "Pull request can be automatically merged and does not require code review"
-    color: "#344e41"
+    color: "#76dbbe"
   show:
     description: "Pull request can be auto-merged and a code review should be done post-merge"
-    color: "#fefae0"
+    color: "#2986cc"
   ask:
     description: "Pull request requires a code review before merge"
-    color: "#1d3557"
+    color: "#c90076"
 
 rules:
   - name: is-ship
