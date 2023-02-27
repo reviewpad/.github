@@ -1,44 +1,50 @@
 api-version: reviewpad.com/v3.x
 
 labels:
-  bug-fix:
-    description: "Bug fix (non-breaking change which fixes an issue)"
-    color: "#d62828"
-  new-feature:
-    description: "New feature (non-breaking change which adds functionality)"
-    color: "#83c5be"
-  improvements:
-    description: "Improvements (non-breaking change without functionality)"
-    color: "#ffd60a"
-  breaking-change:
-    description: "Improvements (non-breaking change without functionality)"
-    color: "#d62828"
+  ship:
+    description: "Pull request can be automatically merged and does not require code review"
+    color: "#344e41"
+  show:
+    description: "Pull request can be auto-merged and a code review should be done post-merge"
+    color: "#fefae0"
+  ask:
+    description: "Pull request requires a code review before merge"
+    color: "#1d3557"
 
 rules:
-  - name: is-bug-fix
-    spec: $contains($description(), "**Bug fix**") && !$contains($description(), "<!-- **Bug fix**")
-  - name: is-new-feature
-    spec: $contains($description(), "**New feature**") && !$contains($description(), "<!-- **New feature**")
-  - name: is-improvements
-    spec: $contains($description(), "**Improvements**") && !$contains($description(), "<!-- **Improvements**")
-  - name: is-breaking-change
-    spec: $contains($description(), "**Breaking change**") && !$contains($description(), "<!-- **Breaking change**")
+  - name: is-ship
+    spec: $contains($description(), "**Ship**:") && !$contains($description(), "<!-- **Ship**:")
+  - name: is-show
+    spec: $contains($description(), "**Show**:") && !$contains($description(), "<!-- **Show**:")
+  - name: is-ask
+    spec: $contains($description(), "**Ask**:") && !$contains($description(), "<!-- **Ask**:")
 
 workflows:
-  # Label a pull request based on the type of change.
-  # This is useful for filtering pull requests in the pull request list.
-  - name: label-type-of-change
+  # Label a pull request based on type of merge strategy.
+  - name: add-merge-strategy-label
     always-run: true
     if:
-      - rule: is-bug-fix
+      - rule: is-ship
         extra-actions:
-          - $addLabel("bug-fix")
-      - rule: is-new-feature
+          - $addLabel("ship")
+      - rule: is-show
         extra-actions:
-          - $addLabel("new-feature")
-      - rule: is-improvements
+          - $addLabel("show")
+      - rule: is-ask
         extra-actions:
-          - $addLabel("improvements")
-      - rule: is-breaking-change
+          - $addLabel("ask")
+
+  # Remove type of change labels based on the type of change.
+  # This is useful for when the type of change is udpated.
+  - name: remove-change-type-label
+    always-run: true
+    if:
+      - rule: '!$rule("is-ship")'
         extra-actions:
-          - $addLabel("breaking-change")
+          - $removeLabel("ship")
+      - rule: '!$rule("is-show")'
+        extra-actions:
+          - $removeLabel("show")
+      - rule: '!$rule("is-ask")'
+        extra-actions:
+          - $removeLabel("ask")

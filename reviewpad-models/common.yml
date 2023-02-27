@@ -4,6 +4,7 @@ metrics-on-merge: true
 
 extends:
   - https://github.com/reviewpad/.github/blob/main/reviewpad-models/change-type.yml
+  - https://github.com/reviewpad/.github/blob/main/reviewpad-models/ship-show-ask.yml
 
 labels:
   small:

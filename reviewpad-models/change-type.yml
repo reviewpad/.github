@@ -2,16 +2,16 @@ api-version: reviewpad.com/v3.x
 
 labels:
   bug-fix:
-    description: "Bug fix (non-breaking change which fixes an issue)"
+    description: "Non-breaking change which fixes an issue"
     color: "#d62828"
   new-feature:
-    description: "New feature (non-breaking change which adds functionality)"
+    description: "Non-breaking change which adds functionality"
     color: "#83c5be"
   improvements:
-    description: "Improvements (non-breaking change without functionality)"
+    description: "Non-breaking change without functionality"
     color: "#ffd60a"
   breaking-change:
-    description: "Improvements (non-breaking change without functionality)"
+    description: "Non-breaking change without functionality"
     color: "#d62828"
 
 rules:
