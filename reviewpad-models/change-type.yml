@@ -1,0 +1,62 @@
+api-version: reviewpad.com/v3.x
+
+labels:
+  bug-fix:
+    description: "Bug fix (non-breaking change which fixes an issue)"
+    color: "#d62828"
+  new-feature:
+    description: "New feature (non-breaking change which adds functionality)"
+    color: "#83c5be"
+  improvements:
+    description: "Improvements (non-breaking change without functionality)"
+    color: "#ffd60a"
+  breaking-change:
+    description: "Improvements (non-breaking change without functionality)"
+    color: "#d62828"
+
+rules:
+  - name: is-bug-fix
+    spec: $contains($description(), "**Bug fix**") && !$contains($description(), "<!-- **Bug fix**")
+  - name: is-new-feature
+    spec: $contains($description(), "**New feature**") && !$contains($description(), "<!-- **New feature**")
+  - name: is-improvements
+    spec: $contains($description(), "**Improvements**") && !$contains($description(), "<!-- **Improvements**")
+  - name: is-breaking-change
+    spec: $contains($description(), "**Breaking change**") && !$contains($description(), "<!-- **Breaking change**")
+
+workflows:
+  # Label a pull request based on the type of change.
+  # This is useful for filtering pull requests in the pull request list.
+  - name: add-change-type-label
+    always-run: true
+    if:
+      - rule: is-bug-fix
+        extra-actions:
+          - $addLabel("bug-fix")
+      - rule: is-new-feature
+        extra-actions:
+          - $addLabel("new-feature")
+      - rule: is-improvements
+        extra-actions:
+          - $addLabel("improvements")
+      - rule: is-breaking-change
+        extra-actions:
+          - $addLabel("breaking-change")
+
+  # Remove type of change labels based on the type of change.
+  # This is useful for when the type of change is udpated.
+  - name: remove-change-type-label
+    always-run: true
+    if:
+      - rule: '!$rule("is-bug-fix")'
+        extra-actions:
+          - $removeLabel("bug-fix")
+      - rule: '!$rule("is-new-feature")'
+        extra-actions:
+          - $removeLabel("new-feature")
+      - rule: '!$rule("is-improvements")'
+        extra-actions:
+          - $removeLabel("improvements")
+      - rule: '!$rule("is-breaking-change")'
+        extra-actions:
+          - $removeLabel("breaking-change")

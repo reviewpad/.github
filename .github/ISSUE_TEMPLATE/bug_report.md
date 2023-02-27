@@ -7,14 +7,18 @@ assignees: ''
 
 ---
 
-**Describe the bug**
+## Describe the bug
 
+<!-- Please add a clear and concise description of what the bug is. -->
 
-**To Reproduce**
-Please provide a link if possible.
+## How to reproduce
 
-**Expected behavior**
+<!-- Please provide a way to reproduce the bug. -->
 
+## Expected behavior
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+<!-- Please tell us what you expected to happen. -->
+
+## Screenshots
+
+<!-- If applicable, add screenshots to help explain your problem. -->

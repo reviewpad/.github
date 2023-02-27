@@ -2,6 +2,9 @@ api-version: reviewpad.com/v3.x
 
 metrics-on-merge: true
 
+extends:
+  - https://github.com/reviewpad/.github/blob/main/reviewpad-models/change-type.yml
+
 labels:
   small:
     color: "#294b69"
@@ -9,6 +12,14 @@ labels:
     color: "#a8c3f7"
   large:
     color: "#8a2138"
+
+rules:
+  # Check if the pull request has a change type.
+  # This rule requires the extended file
+  # https://github.com/reviewpad/.github/blob/main/reviewpad-models/change-type.yml
+  - name: has-change-type
+    description: "The pull request does not have a change type."
+    spec: $rule("is-bug-fix") || $rule("is-new-feature") || $rule("is-improvements") || $rule("is-breaking-change")
 
 workflows:
   # Label a pull request based on the number of files changed.
@@ -37,36 +48,9 @@ workflows:
           - $commitLint()
           - $titleLint()
 
-  # Check if the pull request has a linear history.
-  # This is useful for avoiding merge commits.
-  - name: linear-history
-    always-run: true
-    if:
-      - rule: '!$hasLinearHistory()'
-        extra-actions:
-          - $warn("The pull request does not have a linear history.")
-
-  # Check if the pull request has git conflicts.
-  # This is useful for avoiding merge conflicts.
-  - name: conflicts
-    always-run: true
-    if:
-      - rule: $hasGitConflicts()
-        extra-actions:
-          - $error("This pull request has merge conflicts. Please resolve them.")
-
-  # Check if the pull request has a linked issue.
-  # This is useful for help the reviewer understand the context of the pull request.
-  - name: linked-issue
-    always-run: true
-    if:
-      - rule: '!$hasLinkedIssues()'
-        extra-actions:
-          - $warn("This pull request does not have a linked issue. This may make it harder to review.")
-
   # Check if the pull request/issue has a description.
   # This is a must to help a contributor to understand the context of the pull request/issue.
-  - name: description
+  - name: empty-description
     always-run: true
     on:
       - pull_request
@@ -75,15 +59,6 @@ workflows:
       - rule: $description() == ""
         extra-actions:
           - $close("Automatically closing this issue/pull request. Please add a description.")
-
-  # Check if a pull request author has too many open pull requests.
-  # This is useful for avoiding having too many open pull requests.
-  - name: pace
-    always-run: true
-    if:
-      - rule: '!$isDraft() && $pullRequestCountBy($author(), "open") > 3'
-        extra-actions:
-          - $error("You have too many open pull requests. Please close some of them. Reviewpad will not assign a reviewer until you do so.")
 
   # Welcome a first-time pull request contributor.
   # This is useful for making the contributor feel welcome.
@@ -125,49 +100,84 @@ pipelines:
     trigger: $assignees() == []
     stages:
       - actions:
-          - $error("The pull request is a draft. This is a requirement for Reviewpad to assign a reviewer.")
+          - $info("The pull request is still in draft. Reviewpad will only assign a reviewer when it is ready to be reviewed.")
         until: '!$isDraft()'
+      # Check if the pull request author has too many open pull requests.
+      # This is useful for avoiding a contributor to be overwhelmed by too many pull requests.
       - actions:
-          - $error("The pull request does not have a description. This is a requirement for Reviewpad to assign a reviewer.")
-        until: $description() != ""
+          - $error("You have too many open pull requests. Please close some of them before opening a new one. Reviewpad will only assign a reviewer when you have less than 3 open pull requests.")
+        until: $pullRequestCountBy($author(), "open") < 3
+      # Check if the pull request has a change type.
+      # This is useful for filtering pull requests in the pull request list.
       - actions:
-          - $error("The pull request has git conflicts. This is a requirement for Reviewpad to assign a reviewer.")
+          - $error("The pull request does not have a type of change. Please add one by editing to the pull request description. Reviewpad will only assign a reviewer when the pull request has a change type.")
+        until: $rule("has-change-type")
+      # Check if the pull request has a git conflicts.
+      # This is useful for avoiding merge conflicts.
+      - actions:
+          - $error("The pull request has git conflicts. Please fix them. Reviewpad will only assign a reviewer when they are fixed.")
         until: '!$hasGitConflicts()'
+      # Check if the pull request has a linked issue.
+      # This is useful for tracking the progress of the pull request.
       - actions:
-          - $error("The pull request does not have a linked issue. This is a requirement for Reviewpad to assign a reviewer.")
+          - $error("The pull request does not have a linked issue. Please link one. Reviewpad will only assign a reviewer when the pull request is linked to an issue.")
         until: $hasLinkedIssues()
+      # Check if the pull request is up to date with the base branch.
+      # This is useful for avoiding merge commits.
       - actions:
-          - $error("The pull request does not have a linear history. This is a requirement for Reviewpad to assign a reviewer.")
+          - $error("The pull request it not up to date with the base branch. Please rebase it. Reviewpad will only assign a reviewer when the pull request is up to date with the base branch.")
+        until: $isUpdatedWithBaseBranch()
+      # Check if the pull request has a linear history.
+      # This is useful for avoiding merge commits.
+      - actions:
+          - $error("The pull request does not have a linear history. Please fix it. Reviewpad will only assign a reviewer when the pull request has a linear history.")
         until: $hasLinearHistory()
+      # Check if the pull request has all checks completed with success.
+      # This is useful for avoiding a reviewer to review a pull request that is not ready to be reviewed.
       - actions:
-          - $warn("The pull request does not have all checks completed with success. This is a requirement for it to be assigned to a reviewer. If checks are still running, a reviwer will be assigned when they complete. If checks have failed, a reviewer will be assigned when they are fixed.")
+          - $warn("The pull request does not have all checks completed with success. If checks are still running, Reviewpad will only assign a reviewer when all checks have completed. If checks have failed, please fix them.")
         until: $haveAllChecksRunCompleted([], "success")
+      # At this point, the pull request is ready to be reviewed.
       - actions:
           - $assignAssignees([$author()])
           - $assignCodeAuthorReviewers(2, ["fmallet", "monicalacerda", "reviewpad-bot", "adrianoapmartins", "simonbrandhof"])
+          # This is a workaround to trigger a new reviewpad run.
+          - $comment("/reviewpad run")
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
     trigger: $state() == "open" && $assignees() != []
     stages:
+      # Check if the pull request has git conflicts.
       - actions:
           - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request has merge conflicts. Please fix them.")
         until: '!$hasGitConflicts()'
-      - actions:
-          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request checks are not all completed with success.")
-        until: $haveAllChecksRunCompleted([], "success")
-      - actions:
-          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for reviews.")
-        until: $requestedReviewers() == []
-      - actions:
-          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for approvals.")
-        until: $approvalsCount() > 2
+      # Check if the pull request is rebasable.
+      # This is useful for the next stage where the pull request will be rebased if needed.
       - actions:
           - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is not rebaseable. Please fix the conflicts.")
         until: $selectFromJSON($toJSON($context()), "$.rebaseable") == "true"
+      # Check if the pull request is up to date with the base branch.
+      # If not, rebase it.
       - actions:
+          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is not up to date with the base branch. Reviewpad will rebase it for you. Please wait for the rebase to complete.")
           - $rebase()
         until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
+      # Check if the pull request has all checks completed with success.
       - actions:
-          - $approve(""**[Merge Status]** Pull request is ready to be merged.")
+          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request checks are not all completed with success. Blocking merge until all checks are completed with success.")
+        until: $haveAllChecksRunCompleted([], "success")
+      # Check if the pull request is still waiting for review.
+      # If yes, create a review to block the merge.
+      - actions:
+         - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for review. Blocking merge until all reviewers have reviewed the pull request.")
+        until: $requestedReviewers() == []
+      # Check if the pull request is still waiting for approval.
+      # If yes, create a review to block the merge.
+      - actions:
+          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for approval. Blocking merge until all reviewers have approved the pull request.")
+        until: $approvalsCount() > 0
+      # At this point, the pull request is ready to be merged.
+      - actions:
+          - $approve("**[Merge Status]** Pull request is ready to be merged.")
           - $merge("squash")
