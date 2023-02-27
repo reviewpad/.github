@@ -146,46 +146,44 @@ pipelines:
       - actions:
           - $assignAssignees([$author()])
           - $assignCodeAuthorReviewers(2, ["fmallet", "monicalacerda", "reviewpad-bot", "adrianoapmartins", "simonbrandhof"])
-          # This is a workaround to trigger a new reviewpad run.
-          - $comment("/reviewpad run")
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
     trigger: $state() == "open" && $assignees() != [] && !$rule("is-ship")
     stages:
       - actions:
-          - $review("COMMENT", "**[Merge Status]** Pull request has do-not-merge label. Blocking merge with request changes.")
+          - $review("REQUEST_CHANGES", "Pull request has do-not-merge label. Blocking merge with request changes.")
         until: '!$isElementOf("do-not-merge", $labels())'
       # Check if the pull request has git conflicts.
       - actions:
-          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request has merge conflicts. Please fix them.")
+          - $review("REQUEST_CHANGES", "Pull request has merge conflicts. Please fix them.")
         until: '!$hasGitConflicts()'
       # Check if the pull request is rebasable.
       # This is useful for the next stage where the pull request will be rebased if needed.
       - actions:
-          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is not rebaseable. Please fix the conflicts.")
+          - $review("REQUEST_CHANGES", "Pull request is not rebaseable. Please fix the conflicts.")
         until: $selectFromJSON($toJSON($context()), "$.rebaseable") == "true"
       # Check if the pull request is up to date with the base branch.
       # If not, rebase it.
       - actions:
-          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is not up to date with the base branch. Reviewpad will rebase it for you. Please wait for the rebase to complete.")
+          - $comment("Pull request is not up to date with the base branch. Reviewpad will rebase it for you. Please wait for the rebase to complete.")
           - $rebase()
         until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
       # Check if the pull request has all checks completed with success.
       - actions:
-          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request checks are not all completed with success. Blocking merge until all checks are completed with success.")
+          - $addLabel("waiting-checks")
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       # Check if the pull request is still waiting for review.
       # If yes, create a review to block the merge.
       - actions:
-         - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for review. Blocking merge until all reviewers have reviewed the pull request.")
+         - $addLabel("waiting-review")
         until: $requestedReviewers() == []
       # Check if the pull request is still waiting for approval.
       # If yes, create a review to block the merge.
       - actions:
-          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for approval. Blocking merge until all reviewers have approved the pull request.")
+          - $addLabel("waiting-approval")
         until: $approvalsCount() > 1
       # At this point, the pull request is ready to be merged.
       - actions:
-          - $approve("**[Merge Status]** Pull request is ready to be merged.")
+          - $comment("Pull request is ready to be merged. Reviewpad will merge it for you. Please wait for the merge to complete.")
           - $merge("squash")
