@@ -177,7 +177,7 @@ pipelines:
       # If yes, create a review to block the merge.
       - actions:
           - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for approval. Blocking merge until all reviewers have approved the pull request.")
-        until: $approvalsCount() > 0
+        until: $approvalsCount() > 1
       # At this point, the pull request is ready to be merged.
       - actions:
           - $approve("**[Merge Status]** Pull request is ready to be merged.")
