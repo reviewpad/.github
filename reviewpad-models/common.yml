@@ -11,38 +11,103 @@ labels:
     color: "#8a2138"
 
 workflows:
-  - name: add-label-with-size
+  # Label a pull request based on the number of files changed.
+  # This is useful for filtering pull requests in the pull request list.
+  - name: size-labeler
     always-run: true
     if:
       - rule: $size() <= 30
         extra-actions:
-          - '$addLabel("small")'
+          - $addLabel("small")
       - rule: $size() > 30 && $size() <= 100
         extra-actions:
-          - '$addLabel("medium")'
+          - $addLabel("medium")
       - rule: $size() > 100
         extra-actions:
-          - '$addLabel("large")'
+          - $addLabel("large")
 
-  - name: lint-commits
+  # Check if the pull request commits and title follow the conventional commits specification.
+  # This is useful for generating changelogs.
+  # The title is checked because it can be used as the commit message when merging.
+  - name: commit-compliance
+    always-run: true
+    if:
+      - rule: '!$isDraft()'
+        extra-actions:
+          - $commitLint()
+          - $titleLint()
+
+  # Check if the pull request has a linear history.
+  # This is useful for avoiding merge commits.
+  - name: linear-history
     always-run: true
     if:
       - rule: '!$hasLinearHistory()'
         extra-actions:
-          - '$warn("The pull request does not have a linear history.")'
-      - rule: 'true'
-        extra-actions:
-          - '$commitLint()'
-          - '$titleLint()'
+          - $warn("The pull request does not have a linear history.")
 
-  - name: check-for-linked-issued
+  # Check if the pull request has git conflicts.
+  # This is useful for avoiding merge conflicts.
+  - name: conflicts
     always-run: true
     if:
-      - '!$hasLinkedIssues()'
-    then:
-      - '$info("This pull request does not have a linked issue.")'
+      - rule: $hasGitConflicts()
+        extra-actions:
+          - $error("This pull request has merge conflicts. Please resolve them.")
 
-  - name: manage-issues-in-projects
+  # Check if the pull request has a linked issue.
+  # This is useful for help the reviewer understand the context of the pull request.
+  - name: linked-issue
+    always-run: true
+    if:
+      - rule: '!$hasLinkedIssues()'
+        extra-actions:
+          - $warn("This pull request does not have a linked issue. This may make it harder to review.")
+
+  # Check if the pull request/issue has a description.
+  # This is a must to help a contributor to understand the context of the pull request/issue.
+  - name: description
+    always-run: true
+    on:
+      - pull_request
+      - issue
+    if:
+      - rule: $description() == ""
+        extra-actions:
+          - $close("Automatically closing this issue/pull request. Please add a description.")
+
+  # Check if a pull request author has too many open pull requests.
+  # This is useful for avoiding having too many open pull requests.
+  - name: pace
+    always-run: true
+    if:
+      - rule: '!$isDraft() && $pullRequestCountBy($author(), "open") > 3'
+        extra-actions:
+          - $error("You have too many open pull requests. Please close some of them. Reviewpad will not assign a reviewer until you do so.")
+
+  # Welcome a first-time pull request contributor.
+  # This is useful for making the contributor feel welcome.
+  - name: first-time-contributor-pull-request
+    always-run: true
+    if:
+      - $pullRequestCountBy($author(), "all") == 1
+    then:
+      - $commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request! The team will review it as soon as possible.", [$author()]))
+
+  # Welcome a first-time issue contributor.
+  # This is useful for making the contributor feel welcome.
+  - name: first-time-contributor-issue
+    always-run: true
+    on:
+      - issue
+    if:
+      - $issueCountBy($author(), "all") == 1
+    then:
+      - $commentOnce($sprintf("Welcome @%v! Thank you so much for your first issue!", [$author()]))
+
+  # Link an issue to Reviewpad project.
+  # This is useful for tracking the progress of the issue.
+  - name: link-to-project
     always-run: true
     on:
       - issue
@@ -54,19 +119,55 @@ workflows:
         extra-actions:
           - $addToProject("Reviewpad", "Done")
 
-  - name: first-time-contributor
-    always-run: true
-    if:
-      - '$pullRequestCountBy($author(), "all") == 1'
-    then:
-      - '$commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request!", [$author()]))'
+pipelines:
+  # Assign a pull request to a reviewer when it is ready to be reviewed.
+  - name: assignment
+    trigger: $assignees() == []
+    stages:
+      - actions:
+          - $error("The pull request is a draft. This is a requirement for Reviewpad to assign a reviewer.")
+        until: '!$isDraft()'
+      - actions:
+          - $error("The pull request does not have a description. This is a requirement for Reviewpad to assign a reviewer.")
+        until: $description() != ""
+      - actions:
+          - $error("The pull request has git conflicts. This is a requirement for Reviewpad to assign a reviewer.")
+        until: '!$hasGitConflicts()'
+      - actions:
+          - $error("The pull request does not have a linked issue. This is a requirement for Reviewpad to assign a reviewer.")
+        until: $hasLinkedIssues()
+      - actions:
+          - $error("The pull request does not have a linear history. This is a requirement for Reviewpad to assign a reviewer.")
+        until: $hasLinearHistory()
+      - actions:
+          - $warn("The pull request does not have all checks completed with success. This is a requirement for it to be assigned to a reviewer. If checks are still running, a reviwer will be assigned when they complete. If checks have failed, a reviewer will be assigned when they are fixed.")
+        until: $haveAllChecksRunCompleted([], "success")
+      - actions:
+          - $assignAssignees([$author()])
+          - $assignCodeAuthorReviewers(2, ["fmallet", "monicalacerda", "reviewpad-bot", "adrianoapmartins", "simonbrandhof"])
 
-  - name: empty-description
-    always-run: true
-    if:
-      - $description() == ""
-    on:
-      - pull_request
-      - issue
-    then:
-      - '$close("Automatically closing this issue/pull request. Please add a description.")'
+  # Merge a pull request when it is ready to be merged.
+  - name: merge
+    trigger: $state() == "open" && $assignees() != []
+    stages:
+      - actions:
+          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request has merge conflicts. Please fix them.")
+        until: '!$hasGitConflicts()'
+      - actions:
+          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request checks are not all completed with success.")
+        until: $haveAllChecksRunCompleted([], "success")
+      - actions:
+          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for reviews.")
+        until: $requestedReviewers() == []
+      - actions:
+          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is waiting for approvals.")
+        until: $approvalsCount() > 2
+      - actions:
+          - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request is not rebaseable. Please fix the conflicts.")
+        until: $selectFromJSON($toJSON($context()), "$.rebaseable") == "true"
+      - actions:
+          - $rebase()
+        until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
+      - actions:
+          - $approve(""**[Merge Status]** Pull request is ready to be merged.")
+          - $merge("squash")
