@@ -149,7 +149,7 @@ pipelines:
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
-    trigger: $state() == "open" && $assignees() != [] && !$rule("is-ship")
+    trigger: $state() == "open" && $assignees() != [] && !$rule("is-ship") && !$isElementOf($author(), $group("bots"))
     stages:
       - actions:
           - $review("REQUEST_CHANGES", "Pull request has do-not-merge label. Blocking merge with request changes.")
