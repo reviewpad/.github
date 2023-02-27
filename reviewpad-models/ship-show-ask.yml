@@ -21,30 +21,18 @@ rules:
 
 workflows:
   # Label a pull request based on type of merge strategy.
-  - name: add-merge-strategy-label
+  - name: merge-strategy-label
     always-run: true
     if:
       - rule: is-ship
         extra-actions:
+          - $removeLabels(["ask", "show"])
           - $addLabel("ship")
       - rule: is-show
         extra-actions:
+          - $removeLabels(["ask", "ship"])
           - $addLabel("show")
       - rule: is-ask
         extra-actions:
+          - $removeLabels(["show", "ship"])
           - $addLabel("ask")
-
-  # Remove type of change labels based on the type of change.
-  # This is useful for when the type of change is udpated.
-  - name: remove-change-type-label
-    always-run: true
-    if:
-      - rule: '!$rule("is-ship")'
-        extra-actions:
-          - $removeLabel("ship")
-      - rule: '!$rule("is-show")'
-        extra-actions:
-          - $removeLabel("show")
-      - rule: '!$rule("is-ask")'
-        extra-actions:
-          - $removeLabel("ask")
