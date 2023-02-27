@@ -14,6 +14,10 @@ labels:
   large:
     color: "#8a2138"
 
+groups:
+  - name: bots
+    spec: '["renovate[bot]"]'
+
 rules:
   # Check if the pull request has a change type.
   # This rule requires the extended file
@@ -98,7 +102,7 @@ workflows:
 pipelines:
   # Assign a pull request to a reviewer when it is ready to be reviewed.
   - name: assignment
-    trigger: $assignees() == []
+    trigger: $assignees() == [] && !$isElementOf($author(), $group("bots"))
     stages:
       - actions:
           - $info("The pull request is still in draft. Reviewpad will only assign a reviewer when it is ready to be reviewed.")
@@ -147,8 +151,12 @@ pipelines:
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
-    trigger: $state() == "open" && $assignees() != []
+    trigger: $state() == "open" && $assignees() != [] && !$rule("is-ship")
     stages:
+      - actions:
+          - $review("COMMENT", "**[Merge Status]** Pull request has do-not-merge label. Blocking merge with request changes.")
+        until:
+          - '!$isElementOf("do-not-merge", $labels())'
       # Check if the pull request has git conflicts.
       - actions:
           - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request has merge conflicts. Please fix them.")
