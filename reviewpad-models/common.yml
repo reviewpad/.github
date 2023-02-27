@@ -155,8 +155,7 @@ pipelines:
     stages:
       - actions:
           - $review("COMMENT", "**[Merge Status]** Pull request has do-not-merge label. Blocking merge with request changes.")
-        until:
-          - '!$isElementOf("do-not-merge", $labels())'
+        until: '!$isElementOf("do-not-merge", $labels())'
       # Check if the pull request has git conflicts.
       - actions:
           - $review("REQUEST_CHANGES", "**[Merge Status]** Pull request has merge conflicts. Please fix them.")
