@@ -26,7 +26,7 @@ We also publish FAQs and announcements in [GitHub discussions](https://github.co
 
 ## Contributing
 
-Not surprisingly, all reviewpad projects use the [Reviewpad action](https://github.com/reviewpad/action) for contributions.
+Not surprisingly, all reviewpad projects use the [Reviewpad App](https://github.com/marketplace/reviewpad) for contributions.
 
 The workflows are specified at [Reviewpad.yml](reviewpad.yml). 
 
@@ -59,14 +59,6 @@ For an example, check the [Reviewpad.yml](https://github.com/reviewpad/reviewpad
 We use short-lived feature branches and pull requests to introduce changes to the codebase.
 
 Reviewpad will take care of most of the automation so that 90% of the pull requests do not stay open for longer than a few hours (even for outside contributors).
-
-Because of the limitation in described in the [official GitHub documentation](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow):
-
-> When you use the repository's GITHUB_TOKEN to perform tasks, events triggered by the GITHUB_TOKEN will not create a new workflow run.
-
-We run the Reviewpad action with an access token from the [reviewpad-bot](https://github.com/reviewpad-bot).
-As soon as GitHub resolves this [issue](https://github.community/t/triggering-a-new-workflow-from-another-workflow/16250),
-the automation actions should be done through the `github-actions (bot)`.
 
 ### Pull Requests
 
