@@ -1,0 +1,8 @@
+{
+    "name": "Reviewpad Organization Workflow",
+    "description": "Reviewpad starter workflow.",
+    "iconName": "reviewpad-icon",
+    "filePatterns": [
+        "^reviewpad.yml$"
+    ]
+}
