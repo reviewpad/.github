@@ -14,4 +14,4 @@ Hi 👋
 
 ---
 
-↗️  Install GitHub App: https://github.com/marketplace/reviewpad
+↗️  Get started: https://docs.reviewpad.com/getting-started/installation
