@@ -187,5 +187,5 @@ pipelines:
         until: $approvalsCount() > 1
       # At this point, the pull request is ready to be merged.
       - actions:
-          - $comment("Pull request is ready to be merged. Reviewpad will merge it for you. Please wait for the merge to complete.")
+          - $approve("Pull request is ready to be merged. Reviewpad will merge it for you. Please wait for the merge to complete.")
           - $merge("squash")
