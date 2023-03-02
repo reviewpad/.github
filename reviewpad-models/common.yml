@@ -115,7 +115,7 @@ pipelines:
       # Check if the pull request has a change type.
       # This is useful for filtering pull requests in the pull request list.
       - actions:
-          - $error("The pull request does not have a type of change. Please add one by editing to the pull request description. Reviewpad will only assign a reviewer when the pull request has a change type.")
+          - $error("The pull request does not have a type of change. Please add one by editing to the pull request description and uncommenting at least one of the types of change. Reviewpad will only assign a reviewer when the pull request has a type of change.")
         until: $rule("has-change-type")
       # Check if the pull request has a git conflicts.
       # This is useful for avoiding merge conflicts.
