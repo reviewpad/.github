@@ -17,6 +17,8 @@ labels:
 groups:
   - name: bots
     spec: '["renovate[bot]"]'
+  - name: HoE
+    spec: '["ferreiratiago"]'
 
 rules:
   # Check if the pull request has a change type.
@@ -145,7 +147,7 @@ pipelines:
       # At this point, the pull request is ready to be reviewed.
       - actions:
           - $assignAssignees([$author()])
-          - $assignCodeAuthorReviewers(2, ["fmallet", "monicalacerda", "reviewpad-bot", "adrianoapmartins", "simonbrandhof"])
+          - $assignCodeAuthorReviewers(1, ["marcelosousa", "fmallet", "monicalacerda", "reviewpad-bot", "adrianoapmartins", "simonbrandhof"])
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
@@ -178,13 +180,22 @@ pipelines:
       # Check if the pull request is still waiting for review.
       # If yes, create a review to block the merge.
       - actions:
-         - $addLabel("waiting-review")
+          - $info("Pull request is still waiting for review.")
+          - $addLabel("waiting-review")
         until: $requestedReviewers() == []
       # Check if the pull request is still waiting for approval.
       # If yes, create a review to block the merge.
       - actions:
+          - $info("Pull request is still waiting for approval.")
           - $addLabel("waiting-approval")
-        until: $approvalsCount() > 1
+        until: $approvalsCount() > 0
+      # When the pull request has been approved by the reviewer,
+      # then request an approval to HoE.
+      - actions:
+          - $info($sprintf("Pull request has been approved by the reviewer and it is now waiting for approval from the @%s.", $group("HoE")) )
+          - $addLabel("waiting-approval")
+          - $assignReviewer($group("HoE"))
+        until: $hasRequiredApprovals(1, $group("HoE"))
       # At this point, the pull request is ready to be merged.
       - actions:
           - $approve("Pull request is ready to be merged. Reviewpad will merge it for you. Please wait for the merge to complete.")
