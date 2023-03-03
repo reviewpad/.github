@@ -16,5 +16,6 @@ jobs:
         uses: reviewpad/action@v3.x
         with:
           # Uses a default Reviewpad configuration file to get your started.
-          # For customization and documentation, see https://github.com/reviewpad/action
-          file_url: https://github.com/reviewpad/.github/blob/main/reviewpad-models/common.yml
+          # Replace the link to point to your organization Reviewpad configuration.
+          # For more customization and documentation, see https://github.com/reviewpad/action
+          file_url: https://github.com/reviewpad/.github/blob/main/reviewpad-models/starter.yml
