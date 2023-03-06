@@ -163,10 +163,10 @@ pipelines:
       # Check needs for manual rebase.
       - actions:
           - $review("REQUEST_CHANGES", "Pull request is not up to date with the base branch and cannot be rebased. You will need to rebase it manually. Reviewpad will only merge the pull request when it is up to date with the base branch.")
-        until: $isUpdatedWithBaseBranch() && $selectFromJSON($toJSON($context()), "$.rebaseable") == "true"
+        until: $isUpdatedWithBaseBranch() && $selectFromContext("$.rebaseable") == "true"
       - actions:
           - $review("REQUEST_CHANGES", "Pull request does not have a linear history and cannot be rebased. You will need to rebase it manually. Reviewpad will only merge the pull request when it has a linear history.")
-        until: $hasLinearHistory() && $selectFromJSON($toJSON($context()), "$.rebaseable") == "true"
+        until: $hasLinearHistory() && $selectFromContext("$.rebaseable") == "true"
       # Check if the pull request is up to date with the base branch.
       # If not, rebase it.
       - actions:
@@ -181,22 +181,26 @@ pipelines:
       # If yes, create a review to block the merge.
       - actions:
           - $info("Pull request is still waiting for review.")
+          - $removeLabels(["waiting-checks"])
           - $addLabel("waiting-review")
         until: $requestedReviewers() == []
       # Check if the pull request is still waiting for approval.
       # If yes, create a review to block the merge.
       - actions:
           - $info("Pull request is still waiting for approval.")
+          - $removeLabels(["waiting-checks", "waiting-review"])
           - $addLabel("waiting-approval")
         until: $approvalsCount() > 0
       # When the pull request has been approved by the reviewer,
       # then request an approval to HoE.
       - actions:
           - $info($sprintf("Pull request has been approved by the reviewer and it is now waiting for approval from the @%s.", $group("HoE")) )
+          - $removeLabels(["waiting-checks", "waiting-review"])
           - $addLabel("waiting-approval")
           - $assignReviewer($group("HoE"))
         until: $hasRequiredApprovals(1, $group("HoE"))
       # At this point, the pull request is ready to be merged.
       - actions:
+          - $removeLabels(["waiting-checks", "waiting-review", "waiting-approval"])
           - $approve("Pull request is ready to be merged. Reviewpad will merge it for you. Please wait for the merge to complete.")
           - $merge("squash")
