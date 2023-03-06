@@ -162,11 +162,8 @@ pipelines:
         until: '!$hasGitConflicts()'
       # Check needs for manual rebase.
       - actions:
-          - $review("REQUEST_CHANGES", "Pull request is not up to date with the base branch and cannot be rebased. You will need to rebase it manually. Reviewpad will only merge the pull request when it is up to date with the base branch.")
-        until: $isUpdatedWithBaseBranch() && $selectFromContext("$.rebaseable") == "true"
-      - actions:
-          - $review("REQUEST_CHANGES", "Pull request does not have a linear history and cannot be rebased. You will need to rebase it manually. Reviewpad will only merge the pull request when it has a linear history.")
-        until: $hasLinearHistory() && $selectFromContext("$.rebaseable") == "true"
+          - $review("REQUEST_CHANGES", "Pull request is not rebaseable. You will need to rebase it manually. Reviewpad will only merge the pull request when it is rebaseable.")
+        until: $selectFromContext("$.rebaseable") == "true"
       # Check if the pull request is up to date with the base branch.
       # If not, rebase it.
       - actions:
