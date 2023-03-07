@@ -147,7 +147,7 @@ pipelines:
       # At this point, the pull request is ready to be reviewed.
       - actions:
           - $assignAssignees([$author()])
-          - $assignCodeAuthorReviewers(1, ["marcelosousa", "fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof"])
+          - $assignCodeAuthorReviewers(1, ["marcelosousa", "fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss"])
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
