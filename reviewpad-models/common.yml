@@ -1,5 +1,3 @@
-api-version: reviewpad.com/v3.x
-
 metrics-on-merge: true
 
 extends:
@@ -100,6 +98,14 @@ workflows:
       - rule: $state() == "closed"
         extra-actions:
           - $addToProject("Reviewpad", "Done")
+  
+  # Verify if the pull request is LGTM.
+  - name: LGTM
+    always-run: true
+    if:
+      - $eventType() == "synchronize" && !$isDraft() && $state() == "open" && $hasCodeWithoutSemanticChanges()
+    then:
+      - $approve("LGTM")
 
 pipelines:
   # Assign a pull request to a reviewer when it is ready to be reviewed.
@@ -146,16 +152,14 @@ pipelines:
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       # At this point, the pull request is ready to be reviewed.
       - actions:
+          - $robin("describe the changes and check if they are critical")
           - $assignAssignees([$author()])
           - $assignCodeAuthorReviewers(1, ["marcelosousa", "fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss"])
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
-    trigger: $state() == "open" && $assignees() != [] && !$rule("is-ship") && !$isElementOf($author(), $group("bots"))
+    trigger: $state() == "open" && $assignees() != [] && !$rule("is-ship") && !$isElementOf($author(), $group("bots")) && !$isElementOf("do-not-merge", $labels())
     stages:
-      - actions:
-          - $review("REQUEST_CHANGES", "Pull request has do-not-merge label. Blocking merge with request changes.")
-        until: '!$isElementOf("do-not-merge", $labels())'
       # Check if the pull request has git conflicts.
       - actions:
           - $review("REQUEST_CHANGES", "Pull request has merge conflicts. Please fix them.")
@@ -172,32 +176,31 @@ pipelines:
         until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
       # Check if the pull request has all checks completed with success.
       - actions:
-          - $addLabel("waiting-checks")
-        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
+          - $review("REQUEST_CHANGES", "Some checks have failed. Please fix them.")
+        until: '!$hasAnyCheckRunCompleted([], "failure")'
       # Check if the pull request is still waiting for review.
       # If yes, create a review to block the merge.
       - actions:
           - $info("Pull request is still waiting for review.")
-          - $removeLabels(["waiting-checks"])
           - $addLabel("waiting-review")
-        until: $requestedReviewers() == []
+        until: $requestedReviewers() == ['reviewpad-bot']
       # Check if the pull request is still waiting for approval.
       # If yes, create a review to block the merge.
       - actions:
           - $info("Pull request is still waiting for approval.")
-          - $removeLabels(["waiting-checks", "waiting-review"])
+          - $removeLabels(["waiting-review"])
           - $addLabel("waiting-approval")
         until: $approvalsCount() > 0
       # When the pull request has been approved by the reviewer,
       # then request an approval to HoE.
       - actions:
           - $info($sprintf("Pull request has been approved by the reviewer and it is now waiting for approval from the @%s.", $group("HoE")) )
-          - $removeLabels(["waiting-checks", "waiting-review"])
+          - $removeLabels(["waiting-review"])
           - $addLabel("waiting-approval")
           - $assignReviewer($group("HoE"))
         until: $hasRequiredApprovals(1, $group("HoE"))
       # At this point, the pull request is ready to be merged.
       - actions:
-          - $removeLabels(["waiting-checks", "waiting-review", "waiting-approval"])
+          - $removeLabels(["waiting-review", "waiting-approval"])
           - $approve("Pull request is ready to be merged. Reviewpad will merge it for you. Please wait for the merge to complete.")
           - $merge("squash")

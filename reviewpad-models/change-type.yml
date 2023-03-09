@@ -1,5 +1,3 @@
-api-version: reviewpad.com/v3.x
-
 labels:
   bug-fix:
     description: "Non-breaking change which fixes an issue"

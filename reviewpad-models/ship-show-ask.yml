@@ -1,5 +1,3 @@
-api-version: reviewpad.com/v3.x
-
 labels:
   ship:
     description: "Pull request can be automatically merged and does not require code review"
