@@ -177,12 +177,14 @@ pipelines:
       # Check if the pull request has all checks completed with success.
       - actions:
           - $review("REQUEST_CHANGES", "Some checks have failed. Please fix them.")
-        until: '!$hasAnyCheckRunCompleted([], "failure")'
+        until: '!$hasAnyCheckRunCompleted([], ["failure"])'
       # Check if the pull request is still waiting for review.
       # If yes, create a review to block the merge.
       - actions:
           - $info("Pull request is still waiting for review.")
           - $addLabel("waiting-review")
+        # We ignore the reviewpad-bot because it is not a real reviewer.
+        # reviewpad-bot is used to block the merge button using protection rules.
         until: $requestedReviewers() == ['reviewpad-bot']
       # Check if the pull request is still waiting for approval.
       # If yes, create a review to block the merge.
