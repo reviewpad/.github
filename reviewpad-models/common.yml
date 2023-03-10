@@ -200,7 +200,7 @@ pipelines:
           - $removeLabels(["waiting-review"])
           - $addLabel("waiting-approval")
           - $assignReviewer($group("HoE"))
-        until: $hasRequiredApprovals(1, $group("HoE"))
+        until: $hasRequiredApprovals(1, $group("HoE")) || $isElementOf($author(), $group("HoE"))
       # At this point, the pull request is ready to be merged.
       - actions:
           - $removeLabels(["waiting-review", "waiting-approval"])
