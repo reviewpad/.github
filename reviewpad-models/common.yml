@@ -185,7 +185,7 @@ pipelines:
           - $addLabel("waiting-review")
         # We ignore the reviewpad-bot because it is not a real reviewer.
         # reviewpad-bot is used to block the merge button using protection rules.
-        until: $requestedReviewers() == ['reviewpad-bot']
+        until: $requestedReviewers() == ["reviewpad-bot"]
       # Check if the pull request is still waiting for approval.
       # If yes, create a review to block the merge.
       - actions:
