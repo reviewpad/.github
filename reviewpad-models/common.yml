@@ -100,12 +100,13 @@ workflows:
           - $addToProject("Reviewpad", "Done")
   
   # Verify if the pull request is LGTM.
-  - name: LGTM
-    always-run: true
-    if:
-      - $eventType() == "synchronize" && !$isDraft() && $state() == "open" && $hasCodeWithoutSemanticChanges()
-    then:
-      - $approve("LGTM")
+  # Uncomment as soon as https://github.com/reviewpad/reviewpad/issues/780 is fixed
+  # - name: LGTM
+  #  always-run: true
+  #  if:
+  #    - $eventType() == "synchronize" && !$isDraft() && $state() == "open" && $hasCodeWithoutSemanticChanges()
+  #  then:
+  #    - $approve("LGTM")
 
 pipelines:
   # Assign a pull request to a reviewer when it is ready to be reviewed.
@@ -152,7 +153,7 @@ pipelines:
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       # At this point, the pull request is ready to be reviewed.
       - actions:
-          - $robin("describe the changes and check if they are critical")
+          - $robinSummarize("default")
           - $assignAssignees([$author()])
           - $assignCodeAuthorReviewers(1, ["marcelosousa", "fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss"])
 
