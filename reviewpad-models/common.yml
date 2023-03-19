@@ -175,10 +175,14 @@ pipelines:
           - $comment("Pull request is not up to date with the base branch. Reviewpad will rebase it for you. Please wait for the rebase to complete.")
           - $rebase()
         until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
-      # Check if the pull request has all checks completed with success.
+      # Check if any of the checks have failed.
       - actions:
           - $review("REQUEST_CHANGES", "Some checks have failed. Please fix them.")
         until: '!$hasAnyCheckRunCompleted([], ["failure"])'
+      # Check if the pull request has all checks completed with success.
+      - actions:
+          - $info("Waiting for all checks to complete with success.")
+        until: $haveAllChecksRunCompleted([], "success")
       # Check if the pull request is still waiting for review.
       # If yes, create a review to block the merge.
       - actions:
