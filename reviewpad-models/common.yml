@@ -99,6 +99,18 @@ workflows:
         extra-actions:
           - $addToProject("Reviewpad", "Done")
   
+  # Summarize an issue.
+  # This helps the author determine whether an external party has a proper understanding of the issue.
+  # And the assignee to have a short description of the issue before reading the full description.
+  - name: summarize-issue
+    always-run: true
+    on:
+      - issue
+    if:
+      - rule: $state() == "open" && !$isLinkedToProject("Reviewpad")
+        extra-actions:
+          - $summarize()
+
   # Verify if the pull request is LGTM.
   # Uncomment as soon as https://github.com/reviewpad/reviewpad/issues/780 is fixed
   # - name: LGTM
