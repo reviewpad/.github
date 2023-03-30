@@ -111,6 +111,16 @@ workflows:
         extra-actions:
           - $summarize()
 
+  # This workflow calls Reviewpad AI agent to summarize the pull request.
+  - name: summarize
+    description: Summarize the pull request
+    always-run: true
+    if:
+      # Summarize the pull request on pull request synchronization.
+      - rule: ($eventType() == "synchronize" || $eventType() == "opened") && $state() == "open"
+        extra-actions:
+          - $summarize()
+
   # Verify if the pull request is LGTM.
   # Uncomment as soon as https://github.com/reviewpad/reviewpad/issues/780 is fixed
   # - name: LGTM
@@ -165,7 +175,6 @@ pipelines:
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       # At this point, the pull request is ready to be reviewed.
       - actions:
-          - $robinSummarize("default", "openai-gpt-4")
           - $assignAssignees([$author()])
           - $assignCodeAuthorReviewers(1, ["marcelosousa", "fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss"])
 
