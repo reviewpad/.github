@@ -1,6 +1,9 @@
 ## Description
 
+copilot:summary
+
 <!-- Please include a clear and concise description of the changes. -->
+
 
 ## Related issue
 
@@ -34,3 +37,6 @@
 <!-- **Ship**: this pull request can be automatically merged and does not require code review -->
 <!-- **Show**: this pull request can be auto-merged and a code review should be done post-merge -->
 <!-- **Ask**: this pull request requires a code review before merge -->
+
+### HOW
+copilot:walkthrough
