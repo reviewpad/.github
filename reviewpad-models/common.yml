@@ -117,7 +117,7 @@ workflows:
     always-run: true
     if:
       # Summarize the pull request on pull request synchronization.
-      - rule: ($eventType() == "synchronize" || $eventType() == "opened") && $state() == "open"
+      - rule: $eventType() == "opened"
         extra-actions:
           - $summarize()
 
