@@ -11,12 +11,20 @@ labels:
     color: "#a8c3f7"
   large:
     color: "#8a2138"
+  approved:
+    color: "#588157"
+  waiting-review:
+    color: "#fb8500"
+  changes-requested:
+    color: "#e63946"
 
 groups:
   - name: bots
     spec: '["renovate[bot]"]'
   - name: HoE
     spec: '["ferreiratiago"]'
+  - name: reviewers
+    spec: $append($reviewers(), $requestedReviewers())
 
 rules:
   # Check if the pull request has a change type.
@@ -121,14 +129,25 @@ workflows:
         extra-actions:
           - $summarize()
 
-  # Verify if the pull request is LGTM.
-  # Uncomment as soon as https://github.com/reviewpad/reviewpad/issues/780 is fixed
-  # - name: LGTM
-  #  always-run: true
-  #  if:
-  #    - $eventType() == "synchronize" && !$isDraft() && $state() == "open" && $hasCodeWithoutSemanticChanges()
-  #  then:
-  #    - $approve("LGTM")
+  - name: review-status
+    description: Check the review status of the pull request
+    always-run: true
+    run:
+      - if: $assignees() != [] && $state() == "open"
+        then:
+          - if: $approvalsCount() > 0
+            then: $addLabel("approved")
+            else: $removeLabel("approved")
+          - if: $isWaitingForReview()
+            then: $addLabel("waiting-review")
+            else: $removeLabel("waiting-review")
+          - if: '$any($group("reviewers"), ($r: String => $reviewerStatus($r) == "CHANGES_REQUESTED"))'
+            then: $addLabel("changes-requested")
+            else: $removeLabel("changes-requested")
+        else:
+          - $removeLabel("approved")
+          - $removeLabel("waiting-review")
+          - $removeLabel("changes-requested")
 
 pipelines:
   # Assign a pull request to a reviewer when it is ready to be reviewed.
