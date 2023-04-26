@@ -21,16 +21,13 @@ workflows:
   # Label a pull request based on type of merge strategy.
   - name: merge-strategy-label
     always-run: true
-    if:
-      - rule: is-ship
-        extra-actions:
-          - $removeLabels(["ask", "show"])
-          - $addLabel("ship")
-      - rule: is-show
-        extra-actions:
-          - $removeLabels(["ask", "ship"])
-          - $addLabel("show")
-      - rule: is-ask
-        extra-actions:
-          - $removeLabels(["show", "ship"])
-          - $addLabel("ask")
+    run:
+      - if: $rule("is-ship")
+        then: $addLabel("ship")
+        else: $removeLabel("ship")
+      - if: $rule("is-show")
+        then: $addLabel("show")
+        else: $removeLabel("show")
+      - if: $rule("is-ask")
+        then: $addLabel("ask")
+        else: $removeLabel("ask")
