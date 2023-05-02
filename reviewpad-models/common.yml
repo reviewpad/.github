@@ -21,8 +21,6 @@ labels:
 groups:
   - name: bots
     spec: '["renovate[bot]"]'
-  - name: reviewers
-    spec: $append($reviewers(), $requestedReviewers())
 
 rules:
   # Check if the pull request has a change type.
@@ -34,7 +32,7 @@ rules:
   # Check if any reviewer has requested changes.
   - name: has-changes-requested
     description: The pull request has changes requested.
-    spec: '$any($group("reviewers"), ($r: String => $reviewerStatus($r) == "CHANGES_REQUESTED"))'
+    spec: '$any($append($reviewers(), $requestedReviewers()), ($r: String => $reviewerStatus($r) == "CHANGES_REQUESTED"))'
 
 workflows:
   # Label a pull request based on the number of files changed.
