@@ -12,6 +12,8 @@ labels:
     color: "#8a2138"
   waiting-approval:
     color: "#fb8500"
+  do-not-merge:
+    color: "#e63946"
 
 groups:
   - name: reviewpad bots
