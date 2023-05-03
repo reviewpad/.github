@@ -10,12 +10,8 @@ labels:
     color: "#a8c3f7"
   large:
     color: "#8a2138"
-  approved:
-    color: "#588157"
-  waiting-review:
+  waiting-approval:
     color: "#fb8500"
-  changes-requested:
-    color: "#e63946"
 
 groups:
   - name: reviewpad bots
@@ -114,13 +110,13 @@ workflows:
         then: $summarize()
 
   # Summarize a pull request using AI to generate a summary.
-  # - name: summarize
-  #   description: Summarize the pull request
-  #   always-run: true
-  #   run:
-  #     # Summarize the pull request on pull request synchronization.
-  #     - if: $eventType() == "opened"
-  #       then: $summarize()
+  - name: summarize
+    description: Summarize the pull request
+    always-run: true
+    run:
+      # Summarize the pull request on pull request synchronization.
+      - if: $eventType() == "opened"
+        then: $summarize()
 
   # Assign a reviewer to the pull request.
   # This is done based on the review strategy.
@@ -212,7 +208,7 @@ pipelines:
         until: '!$rule("has changes requested")'
       - actions:
           - $addLabel("waiting-approval")
-        until: '$all($append($reviewers(), $requestedReviewers()), ($r: String => $reviewerStatus($r) == "APPROVED"))'
+        until: '$all($append($reviewers(), $requestedReviewers()), ($r: String => $isElementOf($r, $group("reviewpad bots")) || $reviewerStatus($r) == "APPROVED"))'
       - actions:
           - $removeLabel("waiting-approval")
           - $warn("Pull request cannot be automatically merged because of the rule **`should block pull request`** on your `reviewpad.yml` file. If you want Reviewpad to merge this pull request please check the conditions of the rule.")
