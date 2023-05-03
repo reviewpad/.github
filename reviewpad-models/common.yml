@@ -128,7 +128,7 @@ workflows:
     always-run: true
     run:
       # When review strategy is "ask", assign a reviewer to the pull request.
-      - if: $assignees() == [] && $author() != "renovate[bot]" && $rule("review-strategy:ask")
+      - if: $assignees() == [] && $author() != "renovate[bot]" && $rule("review-strategy:ask") && $length($append($reviewers(), $requestedReviewers())) == 0
         then: $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
       # When review strategy is "show", remind about the pull request in the meeting.
       - if: $isMerged() && $rule("review-strategy:show")
@@ -152,17 +152,17 @@ pipelines:
       # Check if the pull request has a git conflicts.
       # This is useful for avoiding merge conflicts.
       - actions: 
-          - $error("The pull request has git conflicts. Please fix them. Reviewpad will only assign a reviewer when they are fixed.")
+          - $review("REQUEST_CHANGES", "The pull request has git conflicts. Please fix them.")
         until: '!$hasGitConflicts()'
       # Check if the pull request is up to date with the base branch.
       # This is useful for avoiding merge commits.
       - actions:
-          - $error("The pull request it not up to date with the base branch. Please rebase it. Reviewpad will only assign a reviewer when the pull request is up to date with the base branch.")
+          - $review("REQUEST_CHANGES", "The pull request it not up to date with the base branch. Please rebase it.")
         until: $isUpdatedWithBaseBranch()
       # Check if the pull request has a linear history.
       # This is useful for avoiding merge commits.
       - actions:
-          - $error("The pull request does not have a linear history. Please fix it. Reviewpad will only assign a reviewer when the pull request has a linear history.")
+          - $review("REQUEST_CHANGES", "The pull request does not have a linear history. Please fix it.")
         until: $hasLinearHistory()
       # Check if any of the checks has failed.
       - actions: 
@@ -210,7 +210,7 @@ pipelines:
         until: '!$rule("has changes requested")'
       - actions:
           - $addLabel("waiting-approval")
-        until: '$all($append($reviewers(), $requestedReviewers()), ($r: String => $isElementOf($r, $group("reviewpad bots")) || $reviewerStatus($r) == "APPROVED"))'
+        until: '$length($requestedReviewers()) > 0 || $all($reviewers(), ($r: String => $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
       - actions:
           - $removeLabel("waiting-approval")
           - $warn("Pull request cannot be automatically merged because of the rule **`should block pull request`** on your `reviewpad.yml` file. If you want Reviewpad to merge this pull request please check the conditions of the rule.")
