@@ -1,33 +1,44 @@
 labels:
   ship:
-    description: "Pull request can be automatically merged and does not require code review"
+    description: Pull request can be automatically merged and does not require code review
     color: "#76dbbe"
   show:
-    description: "Pull request can be auto-merged and a code review should be done post-merge"
+    description: Pull request can be auto-merged and a code review should be done post-merge
     color: "#2986cc"
   ask:
-    description: "Pull request requires a code review before merge"
+    description: Pull request requires a code review before merge
     color: "#c90076"
 
 rules:
-  - name: is-ship
+  - name: review-strategy:ship
+    description: Pull request can be automatically merged and does not require a code review
     spec: $contains($description(), "**Ship**:") && !$contains($description(), "<!-- **Ship**:")
-  - name: is-show
+  - name: review-strategy:show
+    description: Pull request can be automatically merged and a code review should be done post-merge
     spec: $contains($description(), "**Show**:") && !$contains($description(), "<!-- **Show**:")
-  - name: is-ask
+  - name: review-strategy:ask
+    description: Pull request requires a code review before merge
     spec: $contains($description(), "**Ask**:") && !$contains($description(), "<!-- **Ask**:")
 
 workflows:
-  # Label a pull request based on type of merge strategy.
-  - name: merge-strategy-label
+  # Check if a pull request has a review strategy specified.
+  - name: merge strategy check
     always-run: true
     run:
-      - if: $rule("is-ship")
+      - if: '!$rule("review-strategy:ship") && !$rule("review-strategy:show") && !$rule("review-strategy:ask")'
+        then: $error("Please specify a review strategy in the description of the pull request")
+
+  # Label a pull request based on type of merge strategy.
+  - name: merge strategy label
+    always-run: true
+    run:
+      - if: $rule("review-strategy:ship")
         then: $addLabel("ship")
         else: $removeLabel("ship")
-      - if: $rule("is-show")
+      - if: $rule("review-strategy:show")
         then: $addLabel("show")
         else: $removeLabel("show")
-      - if: $rule("is-ask")
+      - if: $rule("review-strategy:ask")
         then: $addLabel("ask")
         else: $removeLabel("ask")
+  
