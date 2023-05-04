@@ -120,20 +120,14 @@ workflows:
       - if: $eventType() == "opened"
         then: $summarize()
 
-  # Assign a reviewer to the pull request.
-  # This is done based on the review strategy.
-  # The review strategy can be "ship", "show" or "ask".
-  - name: assign reviewer based on review strategy
-    description: Assign a reviewer to a pull request depending on the review strategy.
+  # Create awareness when the review strategy is show
+  # by reminding about the pull request author to add the pull request to the meeting agenda.
+  - name: review strategy is show
+    description: Handle the review strategy show
     always-run: true
     run:
-      # When review strategy is "ask", assign a reviewer to the pull request.
-      - if: $assignees() == [] && $author() != "renovate[bot]" && $rule("review-strategy:ask") && $length($append($reviewers(), $requestedReviewers())) == 0
-        then: $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
-      # When review strategy is "show", remind about the pull request in the meeting.
       - if: $isMerged() && $rule("review-strategy:show")
         then: $commentOnce($sprintf("@%v please add this pull request to the meeting agenda where pull requests with the `show` strategy are reviewed", [$author()]))
-      # When review strategy is "ship", there is nothing to do.
 
 pipelines:
   # Assign an assignee pull request only when pull request is ready.
@@ -177,6 +171,10 @@ pipelines:
       - actions:
           - $assignAssignees([$author()])
         until: $assignees() != []
+      # Assign a code reviewer
+      - actions:
+          - $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
+        until: '!$rule("review-strategy:ask")'
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
@@ -210,7 +208,11 @@ pipelines:
         until: '!$rule("has changes requested")'
       - actions:
           - $addLabel("waiting-approval")
-        until: '$length($requestedReviewers()) > 0 || $all($reviewers(), ($r: String => $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
+        until: ($rule("review-strategy:ask") && $approvalsCount() > 0) || $length($requestedReviewers()) > 0
+      - actions:
+          - $addLabel("waiting-approval")
+          # Check if the pull request has been approved by all reviewers while ignoring the reviewpad bots.
+        until: '$all($reviewers(), ($r: String => $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
       - actions:
           - $removeLabel("waiting-approval")
           - $warn("Pull request cannot be automatically merged because of the rule **`should block pull request`** on your `reviewpad.yml` file. If you want Reviewpad to merge this pull request please check the conditions of the rule.")
