@@ -208,7 +208,7 @@ pipelines:
         until: '!$rule("has changes requested")'
       - actions:
           - $addLabel("waiting-approval")
-        until: ($rule("review-strategy:ask") && $approvalsCount() > 0) || $length($requestedReviewers()) > 0
+        until: ($rule("review-strategy:ask") && $approvalsCount() > 0) || $length($requestedReviewers()) == 0
       - actions:
           - $addLabel("waiting-approval")
           # Check if the pull request has been approved by all reviewers while ignoring the reviewpad bots.
