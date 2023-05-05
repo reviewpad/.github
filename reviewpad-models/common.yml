@@ -133,7 +133,7 @@ pipelines:
   # Assign an assignee pull request only when pull request is ready.
   - name: assign assignee
     # 
-    trigger: $assignees() == [] && $author() != "renovate[bot]" && !$isDraft()
+    trigger: $assignees() == [] && $author() != "renovate[bot]"
     stages:
       - actions:
           - $info("The pull request is still in draft. Reviewpad will only assign a reviewer when it is ready to be reviewed.")
