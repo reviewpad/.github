@@ -175,6 +175,11 @@ pipelines:
       - actions:
           - $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
         until: '!$rule("review-strategy:ask")'
+      # At this stage we know that the review strategy is ship or show.
+      # In this case we need to trigger the pipeline merge.
+      # We do this by adding a comment to the pull request. This is a hack!!!!!!!
+      - actions:
+          - $comment("/reviewpad run")
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
