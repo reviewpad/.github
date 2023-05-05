@@ -19,7 +19,7 @@ groups:
   - name: reviewpad bots
     spec: '["reviewpad-stage[bot]", "reviewpad[bot]"]'
   - name: reviewers to ignore
-    spec: '["fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss"]'
+    spec: '["fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss", "robinaidev"]'
 
 rules:
   # Check if any reviewer has requested changes.
