@@ -36,7 +36,6 @@ workflows:
   # Label a pull request based on the number of files changed.
   # This is useful for filtering pull requests in the pull request list.
   - name: size labeler
-    always-run: true
     run:
       - if: $size() <= 30
         then: $addLabel("small")
@@ -52,7 +51,6 @@ workflows:
   # This is useful for generating changelogs.
   # The title is checked because it can be used as the commit message when merging.
   - name: commit compliance
-    always-run: true
     run:
       - if: '!$isDraft()'
         then:
@@ -62,7 +60,6 @@ workflows:
   # Check if the pull request/issue has a description.
   # This is a must to help a contributor to understand the context of the pull request/issue.
   - name: empty description
-    always-run: true
     on:
       - pull_request
       - issue
@@ -73,7 +70,6 @@ workflows:
   # Welcome a first-time pull request contributor.
   # This is useful for making the contributor feel welcome.
   - name: first time contributor pull request
-    always-run: true
     run:
       - if: $pullRequestCountBy($author(), "all") == 1
         then: $commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request! The team will review it as soon as possible.", [$author()]))
@@ -81,7 +77,6 @@ workflows:
   # Welcome a first-time issue contributor.
   # This is useful for making the contributor feel welcome.
   - name: first time contributor issue
-    always-run: true
     on:
       - issue
     run:
@@ -91,7 +86,6 @@ workflows:
   # Link an issue to Reviewpad project.
   # This is useful for tracking the progress of the issue.
   - name: link issue to project
-    always-run: true
     on:
       - issue
     run:
@@ -104,7 +98,6 @@ workflows:
   # This helps the author determine whether an external party has a proper understanding of the issue.
   # And the assignee to have a short description of the issue before reading the full description.
   - name: summarize issue
-    always-run: true
     on:
       - issue
     run:
@@ -114,7 +107,6 @@ workflows:
   # Summarize a pull request using AI to generate a summary.
   - name: summarize
     description: Summarize the pull request
-    always-run: true
     run:
       # Summarize the pull request on pull request synchronization.
       - if: $eventType() == "opened"
@@ -124,7 +116,6 @@ workflows:
   # by reminding about the pull request author to add the pull request to the meeting agenda.
   - name: review strategy is show
     description: Handle the review strategy show
-    always-run: true
     run:
       - if: $isMerged() && $rule("review-strategy:show")
         then: $commentOnce($sprintf("@%v please add this pull request to the meeting agenda where pull requests with the `show` strategy are reviewed", [$author()]))

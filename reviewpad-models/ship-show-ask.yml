@@ -23,14 +23,12 @@ rules:
 workflows:
   # Check if a pull request has a review strategy specified.
   - name: merge strategy check
-    always-run: true
     run:
       - if: '!$rule("review-strategy:ship") && !$rule("review-strategy:show") && !$rule("review-strategy:ask")'
         then: $error("Please specify a review strategy in the description of the pull request")
 
   # Label a pull request based on type of merge strategy.
   - name: merge strategy label
-    always-run: true
     run:
       - if: $rule("review-strategy:ship")
         then: $addLabel("ship")
