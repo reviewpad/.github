@@ -130,9 +130,8 @@ workflows:
         then: $commentOnce($sprintf("@%v please add this pull request to the meeting agenda where pull requests with the `show` strategy are reviewed", [$author()]))
 
 pipelines:
-  # Assign an assignee pull request only when pull request is ready.
-  - name: assign assignee
-    # 
+  # Assign an assignee/reviewer only when pull request is ready.
+  - name: assignment
     trigger: $assignees() == [] && $author() != "renovate[bot]"
     stages:
       - actions:
