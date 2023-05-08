@@ -164,7 +164,7 @@ pipelines:
       # Assign a code reviewer
       - actions:
           - $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
-        until: '!$rule("review-strategy:ask")'
+        until: $rule("review-strategy:ask")
 
   # Merge a pull request when it is ready to be merged.
   - name: merge
@@ -196,9 +196,6 @@ pipelines:
       - actions:
           - $warn("Pull request has changes requested. Please review them.")
         until: '!$rule("has changes requested")'
-      - actions:
-          - $addLabel("waiting-approval")
-        until: ($rule("review-strategy:ask") && $approvalsCount() > 0) || $length($requestedReviewers()) == 0
       - actions:
           - $addLabel("waiting-approval")
           # Check if the pull request has been approved by all reviewers while ignoring the reviewpad bots.
