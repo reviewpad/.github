@@ -1,7 +1,7 @@
 metrics-on-merge: true
 
 extends:
-  - https://github.com/reviewpad/.github/blob/test/reviewpad-models/ship-show-ask.yml
+  - https://github.com/reviewpad/.github/blob/dev/reviewpad-models/ship-show-ask.yml
 
 labels:
   small:
@@ -11,21 +11,43 @@ labels:
   large:
     color: "#8a2138"
   waiting-approval:
+    description: Pull request is waiting for approval
     color: "#fb8500"
   do-not-merge:
+    description: Pull request cannot be merged
     color: "#e63946"
+  requires-author-attention:
+    description: Pull request requires the author to take action
+    color: "#ae2012"
 
 groups:
   - name: reviewpad bots
     spec: '["reviewpad-stage[bot]", "reviewpad[bot]"]'
+
   - name: reviewers to ignore
     spec: '["fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss", "robinaidev"]'
 
 rules:
-  # Check if any reviewer has requested changes.
+  - name: has review strategy
+    description: The pull request has a review strategy specified in the description.
+    spec: $rule("review-strategy:ship") || $rule("review-strategy:show") || $rule("review-strategy:ask")
+
+  - name: is ready
+    description: The pull request is ready for Reviewpad to run.
+    spec: '!$isDraft() && $state() == "open" && $rule("has review strategy") && $pullRequestCountBy($author(), "open") < 3 && $author() != "renovate[bot]"'
+  
   - name: has changes requested
-    description: The pull request has changes requested by a reviewer except for the reviewpad bots.
+    description: |
+      The pull request has a reviewer that requested changes.
+      The reviewpad bots are ignored.
     spec: '$any($append($reviewers(), $requestedReviewers()), ($r: String => !$isElementOf($r, $group("reviewpad bots")) && $reviewerStatus($r) == "CHANGES_REQUESTED"))'
+  
+  - name: all reviewers approved
+    description: |
+      All reviewers have approved the pull request.
+      The reviewpad bots are ignored.
+    spec: '$all($reviewers(), ($r: String => $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
+  
   # Check if the pull request needs to be blocked.
   # This rules can be refined when extending this file.
   - name: should block pull request
@@ -33,59 +55,70 @@ rules:
     spec: $isElementOf("do-not-merge", $labels())
 
 workflows:
-  # Label a pull request based on the number of files changed.
-  # This is useful for filtering pull requests in the pull request list.
-  - name: size labeler
+  - name: check if pull request is ready
+    description: Check if the pull request is ready for Reviewpad to run.
     run:
-      - if: $size() <= 30
-        then: $addLabel("small")
-        else: $removeLabel("small")
-      - if: $size() > 30 && $size() <= 100
-        then: $addLabel("medium")
-        else: $removeLabel("medium")
-      - if: $size() > 100
-        then: $addLabel("large")
-        else: $removeLabel("large")
+      - if: '!$rule("is ready")'
+        then:
+          - if: '!$rule("has review strategy")'
+            then: $error("Please specify a review strategy in the description.")
+          - if: '$pullRequestCountBy($author(), "open") >= 3'
+            then: $error("You have too many pull requests open. Please close some of them first. Reviewpad will stop any further action on this pull request until you have less than 3 pull requests open. Once you have less than 3 pull requests open, please trigger Reviewpad by running the command `/reviewpad run` in a comment.")
 
-  # Check if the pull request commits and title follow the conventional commits specification.
-  # This is useful for generating changelogs.
-  # The title is checked because it can be used as the commit message when merging.
-  - name: commit compliance
+  - name: size labeler
+    description: Label a pull request based on the number of files changed.
     run:
-      - if: '!$isDraft()'
+      - if: $rule("is ready")
+        then:
+          - if: $size() <= 30
+            then: $addLabel("small")
+            else: $removeLabel("small")
+          - if: $size() > 30 && $size() <= 100
+            then: $addLabel("medium")
+            else: $removeLabel("medium")
+          - if: $size() > 100
+            then: $addLabel("large")
+            else: $removeLabel("large")
+
+  - name: commit compliance
+    description: |
+      Check if the pull request commits and title follow the conventional commits specification.
+      This is useful for generating changelogs.
+      The title is checked because it can be used as the commit message when merging.
+    run:
+      - if: $rule("is ready")
         then:
           - $commitLint()
           - $titleLint()
 
-  # Check if the pull request/issue has a description.
-  # This is a must to help a contributor to understand the context of the pull request/issue.
-  - name: empty description
+  - name: empty description on issue
+    description: Check if the issue has a description.
     on:
-      - pull_request
       - issue
     run:
       - if: $description() == ""
+        then: $close("Automatically closing this issue. Please add a description.")
+  
+  - name: empty description on pull request
+    description: Check if the pull request has a description.
+    run:
+      - if: $rule("is ready") && $description() == ""
         then: $close("Automatically closing this issue/pull request. Please add a description.")
 
-  # Welcome a first-time pull request contributor.
-  # This is useful for making the contributor feel welcome.
-  - name: first time contributor pull request
+  - name: welcome first pull request time contributor
     run:
-      - if: $pullRequestCountBy($author(), "all") == 1
+      - if: $rule("is ready") && $pullRequestCountBy($author(), "all") == 1
         then: $commentOnce($sprintf("Welcome @%v! Thank you so much for your first pull request! The team will review it as soon as possible.", [$author()]))
 
-  # Welcome a first-time issue contributor.
-  # This is useful for making the contributor feel welcome.
-  - name: first time contributor issue
+  - name: welcome first time issue contributor
     on:
       - issue
     run:
         - if: $issueCountBy($author(), "all") == 1
           then: $commentOnce($sprintf("Welcome @%v! Thank you so much for your first issue!", [$author()]))
 
-  # Link an issue to Reviewpad project.
-  # This is useful for tracking the progress of the issue.
   - name: link issue to project
+    description: Link an issue to Reviewpad project.
     on:
       - issue
     run:
@@ -94,118 +127,111 @@ workflows:
       - if: $state() == "closed"
         then: $addToProject("Reviewpad", "Done")
   
-  # Summarize an issue.
-  # This helps the author determine whether an external party has a proper understanding of the issue.
-  # And the assignee to have a short description of the issue before reading the full description.
   - name: summarize issue
+    description: Summarize an issue using AI.
     on:
       - issue
     run:
       - if: $state() == "open" && !$isLinkedToProject("Reviewpad")
         then: $summarize()
 
-  # Summarize a pull request using AI to generate a summary.
-  # - name: summarize
-  #  description: Summarize the pull request
-  #  run:
-  #   # Summarize the pull request on pull request synchronization.
-  #    - if: $eventType() == "opened"
-  #      then: $summarize()
-
-  # Create awareness when the review strategy is show
-  # by reminding about the pull request author to add the pull request to the meeting agenda.
-  - name: review strategy is show
-    description: Handle the review strategy show
+  - name: attention set
+    description: Set the type of attention required for the pull request.
     run:
-      - if: $isMerged() && $rule("review-strategy:show")
-        then: $commentOnce($sprintf("@%v please add this pull request to the meeting agenda where pull requests with the `show` strategy are reviewed", [$author()]))
+      - if: $rule("has changes requested")
+        then: $addLabel("requires-author-attention")
+        else: $removeLabel("requires-author-attention")
+      - if: $rule("all reviewers approved")
+        then: $removeLabel("waiting-approval")
+        else: $addLabel("waiting-approval")
 
 pipelines:
-  # Assign an assignee/reviewer only when pull request is ready.
-  - name: assignment
-    trigger: $assignees() == [] && $author() != "renovate[bot]"
+  - name: merge strategy ask
+    trigger: $rule("is ready") && $rule("review-strategy:ask")
     stages:
-      - actions:
-          - $info("The pull request is still in draft. Reviewpad will only assign a reviewer when it is ready to be reviewed.")
-        until: '!$isDraft()'
-      # Check if the pull request author has too many open pull requests.
-      # This is useful for avoiding a contributor to be overwhelmed by too many pull requests.
-      - actions: 
-          - $error("You have too many open pull requests. Please close some of them before opening a new one. Reviewpad will only assign a reviewer when you have less than 3 open pull requests.")
-        until: $pullRequestCountBy($author(), "open") < 3
-      # Check if the pull request has a git conflicts.
-      # This is useful for avoiding merge conflicts.
       - actions: 
           - $review("REQUEST_CHANGES", "The pull request has git conflicts. Please fix them.")
         until: '!$hasGitConflicts()'
-      # Check if the pull request is up to date with the base branch.
-      # This is useful for avoiding merge commits.
-      - actions:
-          - $review("REQUEST_CHANGES", "The pull request it not up to date with the base branch. Please rebase it.")
-        until: $isUpdatedWithBaseBranch()
-      # Check if the pull request has a linear history.
-      # This is useful for avoiding merge commits.
-      - actions:
-          - $review("REQUEST_CHANGES", "The pull request does not have a linear history. Please fix it.")
-        until: $hasLinearHistory()
-      # Check if any of the checks has failed.
       - actions: 
-          - $review("REQUEST_CHANGES", "Some checks have failed. Please fix them.")
-        until: '!$hasAnyCheckRunCompleted([], ["failure"])'
-      # Check if the pull request has all checks completed with success.
-      # This is useful for avoiding a reviewer to review a pull request that is not ready to be reviewed.
-      - actions:
-          - $warn("The pull request does not have all checks completed with success. If checks are still running, please wait.")
-        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
-      # At this point, the pull request is ready to be assigned.
-      - actions:
-          - $assignAssignees([$author()])
-        until: $assignees() != []
-      # Assign a code reviewer
-      - actions:
-          - $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
-        until: '!$rule("review-strategy:ask")'
-
-  # Merge a pull request when it is ready to be merged.
-  - name: merge
-    trigger: $state() == "open" && $assignees() != [] && $author() != "renovate[bot]"
-    stages:
-      # Check if the pull request has git conflicts.
-      - actions: 
-          - $review("REQUEST_CHANGES", "Pull request has merge conflicts. Please fix them.")
-        until: '!$hasGitConflicts()'
-      # Check need for manual rebase.
-      - actions: 
-          - $review("REQUEST_CHANGES", "Pull request is not rebaseable. You will need to rebase it manually.")
+          - $review("REQUEST_CHANGES", "Pull request is not rebaseable. Please rebase it manually.")
         until: $selectFromContext("$.rebaseable") == "true"
-      # Check if the pull request is up to date with the base branch.
-      # If not, rebase it.
       - actions:
-          - $comment("Pull request is not up to date with the base branch. Reviewpad will rebase it for you. Please wait for the rebase to complete.")
+          - $comment("Pull request is not up to date with the base branch. Reviewpad will rebase it.")
           - $rebase()
         until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
-      # Check if any of the checks has failed.
       - actions: 
-          - $review("REQUEST_CHANGES", "Some checks have failed. Please fix them.")
+          - $review("REQUEST_CHANGES", "Some checks are failing. Please fix them.")
         until: '!$hasAnyCheckRunCompleted([], ["failure"])'
-      # Check if all checks have completed with success.
-      - actions: 
-          - $info("Waiting for all checks to complete with success.")
-        until: $haveAllChecksRunCompleted([], "success")
-      # Check if the pull request has any changes requested.
       - actions:
-          - $warn("Pull request has changes requested. Please review them.")
+          - $info("Reviewpad is waiting for all checks to complete with success.")
+        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
+      - actions:
+          - $assignAssignees([$author()])
+          - $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
+        until: $assignees() != []
+      - actions:
+          - $warn("The pull request has changes requested. Please review them.")
         until: '!$rule("has changes requested")'
       - actions:
-          - $addLabel("waiting-approval")
-          # Check if the pull request has been approved by all reviewers while ignoring the reviewpad bots.
-        until: '$all($reviewers(), ($r: String => $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
+          - $info("Reviewpad is waiting for all reviewers to approve it.")
+        until: $rule("all reviewers approved")
       - actions:
-          - $removeLabel("waiting-approval")
-          - $warn("Pull request cannot be automatically merged because of the rule **`should block pull request`** on your `reviewpad.yml` file. If you want Reviewpad to merge this pull request please check the conditions of the rule.")
+          - $commentOnce("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
         until: '!$rule("should block pull request")'
-      # At this point, the pull request is ready to be merged.
       - actions:
-          - $removeLabel("waiting-approval")
           - $approve("Pull request is ready to be merged. Reviewpad will merge it for you.")
+          - $merge("squash")
+
+  - name: merge strategy show
+    trigger: $rule("is ready") && $rule("review-strategy:show")
+    stages:
+      - actions: 
+          - $review("REQUEST_CHANGES", "The pull request has git conflicts. Please fix them.")
+        until: '!$hasGitConflicts()'
+      - actions: 
+          - $review("REQUEST_CHANGES", "Pull request is not rebaseable. Please rebase it manually.")
+        until: $selectFromContext("$.rebaseable") == "true"
+      - actions:
+          - $comment("Pull request is not up to date with the base branch. Reviewpad will rebase it.")
+          - $rebase()
+        until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
+      - actions: 
+          - $review("REQUEST_CHANGES", "Some checks are failing. Please fix them.")
+        until: '!$hasAnyCheckRunCompleted([], ["failure"])'
+      - actions:
+          - $info("Reviewpad is waiting for all checks to complete with success.")
+        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
+      - actions:
+          - $commentOnce("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
+        until: '!$rule("should block pull request")'
+      - actions:
+          - $assignAssignees([$author()])
+          - $approve($sprintf("Pull request is in `show` mode. Reviewpad will merge it. @%v kindly reminder to add this pull request to the meeting agenda where pull requests with the `show` strategy are reviewed.", [$author()]))
+          - $merge("squash")
+  
+  - name: merge strategy ship
+    trigger: $rule("is ready") && $rule("review-strategy:ship")
+    stages:
+      - actions: 
+          - $review("REQUEST_CHANGES", "The pull request has git conflicts. Please fix them.")
+        until: '!$hasGitConflicts()'
+      - actions: 
+          - $review("REQUEST_CHANGES", "Pull request is not rebaseable. Please rebase it manually.")
+        until: $selectFromContext("$.rebaseable") == "true"
+      - actions:
+          - $comment("Pull request is not up to date with the base branch. Reviewpad will rebase it.")
+          - $rebase()
+        until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
+      - actions: 
+          - $review("REQUEST_CHANGES", "Some checks are failing. Please fix them.")
+        until: '!$hasAnyCheckRunCompleted([], ["failure"])'
+      - actions:
+          - $info("Reviewpad is waiting for all checks to complete with success.")
+        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
+      - actions:
+          - $commentOnce("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
+        until: '!$rule("should block pull request")'
+      - actions:
+          - $assignAssignees([$author()])
+          - $approve("Pull request is in `ship` mode. Reviewpad will merge it.")
           - $merge("squash")

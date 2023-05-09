@@ -12,23 +12,19 @@ labels:
 rules:
   - name: review-strategy:ship
     description: Pull request can be automatically merged and does not require a code review
-    spec: $contains($description(), "**Ship**:") && !$contains($description(), "<!-- **Ship**:")
+    spec: $contains($description(), "**Ship**") && !$contains($description(), "<!-- **Ship**")
+  
   - name: review-strategy:show
     description: Pull request can be automatically merged and a code review should be done post-merge
-    spec: $contains($description(), "**Show**:") && !$contains($description(), "<!-- **Show**:")
+    spec: $contains($description(), "**Show**") && !$contains($description(), "<!-- **Show**")
+  
   - name: review-strategy:ask
     description: Pull request requires a code review before merge
-    spec: $contains($description(), "**Ask**:") && !$contains($description(), "<!-- **Ask**:")
+    spec: $contains($description(), "**Ask**") && !$contains($description(), "<!-- **Ask**")
 
 workflows:
-  # Check if a pull request has a review strategy specified.
-  - name: merge strategy check
-    run:
-      - if: '!$rule("review-strategy:ship") && !$rule("review-strategy:show") && !$rule("review-strategy:ask")'
-        then: $error("Please specify a review strategy in the description of the pull request")
-
-  # Label a pull request based on type of merge strategy.
   - name: merge strategy label
+    description: Label a pull request based on the review strategy.
     run:
       - if: $rule("review-strategy:ship")
         then: $addLabel("ship")
