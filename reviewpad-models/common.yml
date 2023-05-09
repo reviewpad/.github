@@ -105,12 +105,12 @@ workflows:
         then: $summarize()
 
   # Summarize a pull request using AI to generate a summary.
-  - name: summarize
-    description: Summarize the pull request
-    run:
-      # Summarize the pull request on pull request synchronization.
-      - if: $eventType() == "opened"
-        then: $summarize()
+  # - name: summarize
+  #  description: Summarize the pull request
+  #  run:
+  #   # Summarize the pull request on pull request synchronization.
+  #    - if: $eventType() == "opened"
+  #      then: $summarize()
 
   # Create awareness when the review strategy is show
   # by reminding about the pull request author to add the pull request to the meeting agenda.
