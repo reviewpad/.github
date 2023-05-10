@@ -46,7 +46,7 @@ rules:
     description: |
       All reviewers have approved the pull request.
       The reviewpad bots are ignored.
-    spec: '$all($reviewers(), ($r: String => $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
+    spec: '$length($requestedReviewers()) == 0 && $all($reviewers(), ($r: String => $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
   
   # Check if the pull request needs to be blocked.
   # This rules can be refined when extending this file.
@@ -174,7 +174,7 @@ pipelines:
         until: '!$rule("has changes requested")'
       - actions:
           - $info("Reviewpad is waiting for all reviewers to approve it.")
-        until: $rule("all reviewers approved")
+        until: $rule("all reviewers approved") && $approvalsCount() > 0
       - actions:
           - $commentOnce("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
         until: '!$rule("should block pull request")'
