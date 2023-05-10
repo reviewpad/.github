@@ -34,7 +34,7 @@ rules:
 
   - name: is ready
     description: The pull request is ready for Reviewpad to run.
-    spec: '!$isDraft() && $state() == "open" && $rule("has review strategy") && $author() != "renovate[bot]"'
+    spec: '!$isDraft() && $state() == "open" && $rule("has review strategy") && $author() != "renovate"'
   
   - name: has changes requested
     description: |
