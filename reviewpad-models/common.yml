@@ -156,7 +156,7 @@ pipelines:
           - $review("REQUEST_CHANGES", "Pull request is not rebaseable. Please rebase it manually.")
         until: $selectFromContext("$.rebaseable") == "true"
       - actions:
-          - $comment("Pull request is not up to date with the base branch. Reviewpad will rebase it.")
+          - $comment("Pull request is not up to date with the base branch. Reviewpad will rebase it. After the rebase, please trigger Reviewpad by running the command `/reviewpad run` in a comment.")
           - $rebase()
         until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
       - actions: 
