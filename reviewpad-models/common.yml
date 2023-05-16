@@ -173,6 +173,9 @@ pipelines:
           - $warn("The pull request has changes requested. Please review them.")
         until: '!$rule("has changes requested")'
       - actions:
+          - $info("The merge is blocked by the label **`do-not-merge`**.")
+        until: '!$isElementOf("do-not-merge", $labels())'
+      - actions:
           - $info("Reviewpad is waiting for all reviewers to approve it.")
         until: $rule("all reviewers approved") && $approvalsCount() > 0
       - actions:
@@ -202,6 +205,9 @@ pipelines:
           - $info("Reviewpad is waiting for all checks to complete with success.")
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       - actions:
+          - $info("The merge is blocked by the label **`do-not-merge`**.")
+        until: '!$isElementOf("do-not-merge", $labels())'
+      - actions:
           - $commentOnce("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
         until: '!$rule("should block pull request")'
       - actions:
@@ -228,6 +234,9 @@ pipelines:
       - actions:
           - $info("Reviewpad is waiting for all checks to complete with success.")
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
+      - actions:
+          - $info("The merge is blocked by the label **`do-not-merge`**.")
+        until: '!$isElementOf("do-not-merge", $labels())'
       - actions:
           - $commentOnce("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
         until: '!$rule("should block pull request")'
