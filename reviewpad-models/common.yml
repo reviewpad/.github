@@ -161,7 +161,7 @@ pipelines:
         until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
       - actions: 
           - $review("REQUEST_CHANGES", "Some checks are failing. Please fix them.")
-        until: '!$hasAnyCheckRunCompleted([], ["failure"])'
+        until: '!$hasAnyCheckRunCompleted(["qodana"], ["failure"])'
       - actions:
           - $info("Reviewpad is waiting for all checks to complete with success.")
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
