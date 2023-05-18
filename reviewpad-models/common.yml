@@ -173,11 +173,11 @@ pipelines:
           - $warn("The pull request has changes requested. Please review them.")
         until: '!$rule("has changes requested")'
       - actions:
-          - $info("The merge is blocked by the label **`do-not-merge`**.")
-        until: '!$isElementOf("do-not-merge", $labels())'
-      - actions:
-          - $comment("Reviewpad is waiting for all reviewers to approve it.")
+          - $info("Reviewpad is waiting for all reviewers to approve it.")
         until: $rule("all reviewers approved") && $approvalsCount() > 0
+      - actions:
+          - $comment("The merge is blocked by the label **`do-not-merge`**.")
+        until: '!$isElementOf("do-not-merge", $labels())'
       - actions:
           - $comment("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
         until: '!$rule("should block pull request")'
@@ -205,10 +205,10 @@ pipelines:
           - $info("Reviewpad is waiting for all checks to complete with success.")
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       - actions:
-          - $commentOnce("The merge is blocked by the label **`do-not-merge`**.")
+          - $comment("The merge is blocked by the label **`do-not-merge`**.")
         until: '!$isElementOf("do-not-merge", $labels())'
       - actions:
-          - $commentOnce("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
+          - $comment("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
         until: '!$rule("should block pull request")'
       - actions:
           - $assignAssignees([$author()])
@@ -235,10 +235,10 @@ pipelines:
           - $info("Reviewpad is waiting for all checks to complete with success.")
         until: $haveAllChecksRunCompleted(["reviewpad"], "success")
       - actions:
-          - $info("The merge is blocked by the label **`do-not-merge`**.")
+          - $comment("The merge is blocked by the label **`do-not-merge`**.")
         until: '!$isElementOf("do-not-merge", $labels())'
       - actions:
-          - $commentOnce("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
+          - $comment("The pull request cannot be merged. The rule **`should block pull request`** is not satisfied.")
         until: '!$rule("should block pull request")'
       - actions:
           - $assignAssignees([$author()])
