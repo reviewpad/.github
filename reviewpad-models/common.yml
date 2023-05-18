@@ -22,7 +22,7 @@ labels:
 
 groups:
   - name: reviewpad bots
-    spec: '["reviewpad-stage[bot]", "reviewpad[bot]", "reviewpad-stage", "reviewpad"]'
+    spec: '["reviewpad-stage[bot]", "reviewpad[bot]"]'
 
   - name: reviewers to ignore
     spec: '["fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss", "robinaidev"]'
@@ -46,7 +46,7 @@ rules:
     description: |
       All reviewers have approved the pull request.
       The reviewpad bots are ignored.
-    spec: '$length($requestedReviewers()) == 0 && $all($reviewers(), ($r: String => $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
+    spec: '$length($requestedReviewers()) == 0 && $all($reviewers(), ($r: String => $r == $author() || $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("reviewpad bots"))))'
   
   # Check if the pull request needs to be blocked.
   # This rules can be refined when extending this file.
