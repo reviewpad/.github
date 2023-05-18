@@ -22,7 +22,7 @@ labels:
 
 groups:
   - name: reviewpad bots
-    spec: '["reviewpad-stage[bot]", "reviewpad[bot]"]'
+    spec: '["reviewpad-stage[bot]", "reviewpad[bot]", "reviewpad-stage", "reviewpad"]'
 
   - name: reviewers to ignore
     spec: '["fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss", "robinaidev"]'
