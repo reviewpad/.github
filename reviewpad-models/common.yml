@@ -122,7 +122,7 @@ workflows:
     on:
       - issue
     run:
-      - if: $state() == "open" && !$isLinkedToProject("Reviewpad")
+      - if: $state() == "open" && !$isLinkedToProject("Reviewpad") && !$isElementOf("epics", $labels())
         then: $addToProject("Reviewpad", "Backlog")
       - if: $state() == "closed"
         then: $addToProject("Reviewpad", "Done")
