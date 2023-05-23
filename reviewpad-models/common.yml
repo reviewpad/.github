@@ -161,10 +161,10 @@ pipelines:
         until: $isUpdatedWithBaseBranch() && $hasLinearHistory()
       - actions: 
           - $review("REQUEST_CHANGES", "Some checks are failing. Please fix them.")
-        until: '!$hasAnyCheckRunCompleted(["qodana"], ["failure"])'
+        until: '!$hasAnyCheckRunCompleted([], ["failure"])'
       - actions:
           - $info("Reviewpad is waiting for all checks to complete with success.")
-        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
+        until: $haveAllChecksRunCompleted(["reviewpad"], "success", ["Copilot for PRs"])
       - actions:
           - $assignAssignees([$author()])
           - $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
@@ -203,7 +203,7 @@ pipelines:
         until: '!$hasAnyCheckRunCompleted([], ["failure"])'
       - actions:
           - $info("Reviewpad is waiting for all checks to complete with success.")
-        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
+        until: $haveAllChecksRunCompleted(["reviewpad"], "success", ["Copilot for PRs"])
       - actions:
           - $comment("The merge is blocked by the label **`do-not-merge`**.")
         until: '!$isElementOf("do-not-merge", $labels())'
@@ -233,7 +233,7 @@ pipelines:
         until: '!$hasAnyCheckRunCompleted([], ["failure"])'
       - actions:
           - $info("Reviewpad is waiting for all checks to complete with success.")
-        until: $haveAllChecksRunCompleted(["reviewpad"], "success")
+        until: $haveAllChecksRunCompleted(["reviewpad"], "success", ["Copilot for PRs"])
       - actions:
           - $comment("The merge is blocked by the label **`do-not-merge`**.")
         until: '!$isElementOf("do-not-merge", $labels())'
