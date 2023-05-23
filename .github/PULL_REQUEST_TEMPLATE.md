@@ -1,6 +1,6 @@
 ## Description
 
-<!-- Please include a summary of the change -->
+reviewpad:summary
 
 ## Code review and merge strategy
 
