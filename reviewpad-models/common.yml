@@ -25,7 +25,7 @@ groups:
     spec: '["reviewpad-stage[bot]", "reviewpad[bot]"]'
 
   - name: reviewers to ignore
-    spec: '["fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss", "robinaidev"]'
+    spec: '["fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss", "robinaidev", "catarinamarcal", "FabioFreitasP"]'
 
 rules:
   - name: has review strategy
