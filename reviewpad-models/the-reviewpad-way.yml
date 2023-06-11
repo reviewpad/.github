@@ -1,0 +1,195 @@
+# Add a metrics report when a pull request is merged.
+# For more information about the metrics report, please visit https://docs.reviewpad.com/guides/syntax/#metrics-on-merge
+metrics-on-merge: true
+
+# Define the list of labels to be used by Reviewpad.
+# For more details see https://docs.reviewpad.com/guides/syntax#label.
+labels:
+  # Size labels
+  small:
+    # TODO: Reviewpad should be able to identify what is the total number of lines that define a small pull request.
+    description: Pull request has less than 30 lines changed
+    color: "#294b69"
+  medium:
+    # TODO: Reviewpad should be able to identify what is the total number of lines that define a medium pull request.
+    description: Pull request has between 30 and 100 lines changed
+    color: "#a8c3f7"
+  large:
+    # TODO: Reviewpad should be able to identify what is the total number of lines that define a large pull request.
+    description: Pull request has more than 100 lines changed
+    color: "#8a2138"
+  # Strategy labels
+  ship:
+    description: Pull request can be automatically merged and does not require a code review
+    color: "#76dbbe"
+  show:
+    description: Pull request can be automatically merged and a code review should be done post-merge
+    color: "#2986cc"
+  ask:
+    description: Pull request requires a code review before merge
+    color: "#c90076"
+  # Attention labels
+  waiting-approval:
+    description: Pull request is waiting for approval
+    color: "#fb8500"
+  requires-author-attention:
+    description: Pull request requires the author to take action
+    color: "#ae2012"
+  # Block labels
+  do-not-merge:
+    name: do not merge
+    description: Pull request cannot be merged
+    color: "#e63946"
+  reviewpad-ignore:
+    name: reviewpad ignore
+    description: Pull request should be ignored by Reviewpad
+    color: "#344e41"
+
+groups:
+  - name: bots
+    description: Bots accounts
+    # TODO: Reviewpad should be able to identify bot accounts and add them to this group.
+    spec: '["reviewpad[bot]"]'
+
+  - name: reviewers to ignore
+    description: Reviewers to ignore when assigning reviewers
+    # TODO: Reviewpad should be able to identify reviewers to ignore and add them to this group.
+    # The reviewers to ignore should be the ones that have not taken part into any pull request in the last X days.
+    spec: '[]'
+
+  - name: files to ignore
+    description: Files to ignore when computing the size of a pull request
+    # TODO: Reviewpad should be able to identify files to ignore and add them to this group.
+    spec: '[]'
+
+rules:
+  - name: review strategy is ship
+    description: Pull request can be automatically merged and does not require a code review
+    spec: $contains($description(), "**Ship**") && !$contains($description(), "<!-- **Ship**")
+  
+  - name: review strategy is show
+    description: Pull request can be automatically merged and a code review should be done post-merge
+    spec: $contains($description(), "**Show**") && !$contains($description(), "<!-- **Show**")
+  
+  - name: review strategy is ask
+    description: |
+      Pull request requires a code review before merge.
+      This is the default review strategy
+    spec: '!$rule("review-strategy:ship") && !$rule("review-strategy:show")'
+
+  - name: review strategy ship requirements are satisfied
+    description: |
+      The pull request satisfies the requirements of the review strategy.
+      The reviewpad bots are ignored.
+    spec: '$rule("review-strategy:ship") || $rule("review-strategy:show") || $rule("review-strategy:ask") && $isElementOf($author(), $group("bots"))'
+
+  - name: has changes requested
+    description: |
+      The pull request has a reviewer that requested changes.
+      The reviewpad bots are ignored.
+    spec: '$any($append($reviewers(), $requestedReviewers()), ($r: String => !$isElementOf($r, $group("bots")) && $reviewerStatus($r) == "CHANGES_REQUESTED"))'
+  
+  - name: all reviewers approved
+    description: |
+      All reviewers have approved the pull request.
+      The reviewpad bots are ignored.
+    spec: '$length($requestedReviewers()) == 0 && $all($reviewers(), ($r: String => $r == $author() || $reviewerStatus($r) == "APPROVED" || $isElementOf($r, $group("bots"))))'
+  
+  - name: can run reviewpad
+    description: Check if the pull request can be processed by Reviewpad
+    spec: '!$isElementOf("reviewpad ignore", $labels())'
+
+  - name: can apply merge strategy
+    description: Check if the pull request is ready to apply the merge strategy
+    spec: $rule("can run reviewpad") && $isDraft()
+
+workflows:
+  - name: size labeler
+    description: Label a pull request based on the number of lines changed.
+    run:
+      - if: $rule("should run reviewpad")
+        then:
+          - if: $size() <= 30
+            then: $addLabel("small")
+            else: $removeLabel("small")
+          - if: $size() > 30 && $size() <= 100
+            then: $addLabel("medium")
+            else: $removeLabel("medium")
+          - if: $size() > 100
+            then: $addLabel("large")
+            else: $removeLabel("large")
+
+  - name: attention set
+    description: Set the type of attention required for the pull request.
+    run:
+      - if: $rule("has changes requested")
+        then: $addLabel("requires-author-attention")
+        else: $removeLabel("requires-author-attention")
+      - if: $rule("all reviewers approved")
+        then: $removeLabel("waiting-approval")
+        else: $addLabel("waiting-approval")
+
+pipelines:
+  - name: merge strategy ask
+    trigger: $rule("can apply merge strategy") && $rule("review-strategy:ask")
+    stages:
+      # TODO: Add the name property to the stage.
+      - name: "[Pull request should be ready to review](https://docs.reviewpad.com/guides/the-reviewpad-way#draft-pull-requests)"
+        actions:
+          - $warn("[The pull request is a draft](https://docs.reviewpad.com/guides/the-reviewpad-way#draft-pull-requests). Please mark it as ready for review for Reviewpad to process it.")
+        until: '!$isDraft()'
+      - name: "[Developer should have less than 3 open pull requests](https://docs.reviewpad.com/guides/the-reviewpad-way#code-review-bottleneck-developer)"
+        actions:
+          - $error("[You have more than 3 open pull requests](https://docs.reviewpad.com/guides/the-reviewpad-way#code-review-bottleneck-developer). Please close some of them first and then run Reviewpad again by commenting `/reviewpad run`.")
+        until: $pullRequestCountBy($author(), "open") <= 3 && $length($assignees()) > 0
+      - name: "[Repository should have less than 7 open pull requests](https://docs.reviewpad.com/guides/the-reviewpad-way#code-review-bottleneck-repository)"
+        actions:
+          - $error("[There are more than 7 open pull requests](https://docs.reviewpad.com/guides/the-reviewpad-way#code-review-bottleneck-repository). Please close some of them first and then run Reviewpad again by commenting `/reviewpad run`.")
+        until: $pullRequestCountBy("", "open") <= 7 && $length($assignees()) > 0
+      - name: "[Pull request should be linked to an issue](https://docs.reviewpad.com/guides/the-reviewpad-way#linked-issue)"
+        actions:
+          - $error("[The pull request is not linked to an issue](https://docs.reviewpad.com/guides/the-reviewpad-way#linked-issue). Please link it to an issue.")
+        until: $hasLinkedIssues()
+      - name: "[Pull request should have a description](https://docs.reviewpad.com/guides/the-reviewpad-way#description)"
+        actions:
+          - $error("[The pull request has no description](https://docs.reviewpad.com/guides/the-reviewpad-way#description). Please add a description.")
+        until: $description() != ""
+      - actions:
+          - $error("[The pull request has commits that do not follow the conventional commits specification](https://docs.reviewpad.com/guides/the-reviewpad-way#conventional-commit-format). Please fix them.")
+        # TODO: Define the built-in $hasCommitLintErrors function.
+        until: $hasCommitLintErrors()
+      - actions:
+          - $error("[The pull request title does not follow the conventional commits specification](https://docs.reviewpad.com/guides/the-reviewpad-way#conventional-commit-format-title). Please fix it.")
+        # TODO: Define the built-in $hasTitleLintErrors function.
+        until: $hasTitleLintErrors()
+      - actions: 
+          - $review("REQUEST_CHANGES", "[Pull request has git conflicts](https://docs.reviewpad.com/guides/the-reviewpad-way#no-git-conflicts). Please resolve them.")
+        until: '!$hasGitConflicts()'
+      - actions: 
+          - $review("REQUEST_CHANGES", "[Pull request is not update to date with the base branch](https://docs.reviewpad.com/guides/the-reviewpad-way#up-to-date-with-base-branch). Please rebase it.")
+        until: $isUpdatedWithBaseBranch()
+      - actions: 
+          - $review("REQUEST_CHANGES", "[Pull request does not have a linear history](https://docs.reviewpad.com/guides/the-reviewpad-way#linear-history). Please fix it.")
+        until: $hasLinearHistory()
+      - actions: 
+          - $review("REQUEST_CHANGES", "[Some checks are failing](https://docs.reviewpad.com/guides/the-reviewpad-way#checks-pass). Please fix them.")
+        until: '!$hasAnyCheckRunCompleted([], ["failure"])'
+      - actions:
+          - $info("Reviewpad is waiting for all checks to complete with success.")
+        until: $haveAllChecksRunCompleted(["Copilot for PRs"], "success")
+      - actions:
+          - $assignAssignees([$author()])
+          - $assignCodeAuthorReviewers(1, $group("reviewers to ignore"), 2)
+        until: $length($assignees()) > 0
+      - actions:
+          - $warn("[The pull request has changes requested](https://docs.reviewpad.com/guides/the-reviewpad-way#address-request-changes). Please review them.")
+        until: '!$rule("has changes requested")'
+      - actions:
+          - $info("[Reviewpad is waiting for all reviewers to approve it](https://docs.reviewpad.com/guides/the-reviewpad-way#approve).")
+        until: $rule("all reviewers approved") && $approvalsCount() > 0
+      - actions:
+          - $comment("The merge is blocked by the label **`do not merge`**.")
+        until: '!$isElementOf("do not merge", $labels())'
+      - actions:
+          - $approve("Pull request is ready to be merged. Reviewpad will merge it for you.")
+          - $merge("squash")
