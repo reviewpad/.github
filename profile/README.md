@@ -12,6 +12,6 @@ Hi there 👋
 
 📣 Join our [Discord](http://reviewpad.com/discord) community to get involved!
 
-↗️  Get started: https://docs.reviewpad.com/getting-started/installation
+↗️  Get started: https://docs.reviewpad.com/installation
 
 <a href="https://drata.com/soc-2?utm_source=soc2badge" target="_blank"><img src="https://cdn.drata.com/badge/soc2-light.png" height="120" /></a>
