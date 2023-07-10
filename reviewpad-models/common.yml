@@ -193,7 +193,7 @@ pipelines:
           - $merge("squash")
 
   - name: merge strategy show
-    trigger: $rule("is ready") && $rule("review-strategy:ask") && $rule("is maintainer")
+    trigger: $rule("is ready") && $rule("review-strategy:show") && $rule("is maintainer")
     stages:
       - actions: 
           - $review("REQUEST_CHANGES", "The pull request has git conflicts. Please fix them.")
