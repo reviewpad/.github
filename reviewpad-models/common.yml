@@ -25,9 +25,16 @@ groups:
     spec: '["reviewpad-stage[bot]", "reviewpad[bot]"]'
 
   - name: reviewers to ignore
-    spec: '["fmallet", "monicalacerda", "adrianoapmartins", "simonbrandhof", "miguelcss", "robinaidev", "catarinamarcal", "FabioFreitasP"]'
+    spec: '["fmallet", "monicalacerda", "adrianoapmartins", "robinaidev", "catarinamarcal", "FabioFreitasP", "reviewpad-bot", "explore-dev-team", "engineeringbeta", "engineeringalpha"]'
+
+  - name: maintainers
+    spec: '["marcelosousa", "shay2025", "zolamk", "ferreiratiago"]'
 
 rules:
+  - name: is maintainer
+    description: The pull request author is a maintainer.
+    spec: $isElementOf($author(), $group("maintainers"))
+
   - name: has review strategy
     description: The pull request has a review strategy specified in the description.
     spec: $rule("review-strategy:ship") || $rule("review-strategy:show") || $rule("review-strategy:ask")
@@ -147,7 +154,7 @@ workflows:
 
 pipelines:
   - name: merge strategy ask
-    trigger: $rule("is ready") && $rule("review-strategy:ask")
+    trigger: $rule("is ready") && ($rule("review-strategy:ask") || !$rule("is maintainer"))
     stages:
       - actions: 
           - $review("REQUEST_CHANGES", "The pull request has git conflicts. Please fix them.")
@@ -186,7 +193,7 @@ pipelines:
           - $merge("squash")
 
   - name: merge strategy show
-    trigger: $rule("is ready") && $rule("review-strategy:show")
+    trigger: $rule("is ready") && $rule("review-strategy:ask") && $rule("is maintainer")
     stages:
       - actions: 
           - $review("REQUEST_CHANGES", "The pull request has git conflicts. Please fix them.")
@@ -216,7 +223,7 @@ pipelines:
           - $merge("squash")
   
   - name: merge strategy ship
-    trigger: $rule("is ready") && $rule("review-strategy:ship")
+    trigger: $rule("is ready") && $rule("review-strategy:ship") && $rule("is maintainer")
     stages:
       - actions: 
           - $review("REQUEST_CHANGES", "The pull request has git conflicts. Please fix them.")
