@@ -191,6 +191,7 @@ pipelines:
       - actions:
           - $approve("Pull request is ready to be merged. Reviewpad will merge it for you.")
           - $merge("squash")
+          - $deleteHeadBranch()
 
   - name: merge strategy show
     trigger: $rule("is ready") && $rule("review-strategy:show") && $rule("is maintainer")
@@ -221,6 +222,7 @@ pipelines:
           - $assignAssignees([$author()])
           - $approve($sprintf("Pull request is in `show` mode. Reviewpad will merge it. @%v kindly reminder to add this pull request to the meeting agenda where pull requests with the `show` strategy are reviewed.", [$author()]))
           - $merge("squash")
+          - $deleteHeadBranch()
   
   - name: merge strategy ship
     trigger: $rule("is ready") && $rule("review-strategy:ship") && $rule("is maintainer")
@@ -251,3 +253,4 @@ pipelines:
           - $assignAssignees([$author()])
           - $approve("Pull request is in `ship` mode. Reviewpad will merge it.")
           - $merge("squash")
+          - $deleteHeadBranch()
