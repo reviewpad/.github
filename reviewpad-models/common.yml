@@ -99,11 +99,11 @@ workflows:
           - $titleLint()
 
   - name: empty description on issue
-    description: Check if the issue has a description and was created more 2 minutes ago
+    description: Check if the issue has a description and was created more 1 day ago
     on:
       - issue
     run:
-      - if: $description() == "" && $createdAt() > 2 minutes ago
+      - if: $description() == "" && $createdAt() > 1 day ago
         then: $close("Automatically closing this issue. Please add a description.")
   
   - name: empty description on pull request
