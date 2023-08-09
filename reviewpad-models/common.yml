@@ -99,11 +99,11 @@ workflows:
           - $titleLint()
 
   - name: empty description on issue
-    description: Check if the issue has a description when adding to Reviewpad project
+    description: Check if the issue has a description and was created more 2 minutes ago
     on:
       - issue
     run:
-      - if: '$description() == "" && $isLinkedToProject("Reviewpad")'
+      - if: '$description() == "" && $createdAt() > 120 seconds ago'
         then: $close("Automatically closing this issue. Please add a description.")
   
   - name: empty description on pull request
