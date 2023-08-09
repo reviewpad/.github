@@ -103,7 +103,7 @@ workflows:
     on:
       - issue
     run:
-      - if: $description() == "" && $createdAt() > 120
+      - if: $description() == "" && $createdAt() > 2 minutes ago
         then: $close("Automatically closing this issue. Please add a description.")
   
   - name: empty description on pull request
